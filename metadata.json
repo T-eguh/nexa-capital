@@ -1,0 +1,7 @@
+{
+  "name": "Nexa Capital - Investment Platform",
+  "description": "Platform investasi saham resmi Nexa Capital dengan produk Fast Yield, dividen harian, sistem referral 3-level, dan penarikan saldo instan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

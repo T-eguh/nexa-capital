@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  nexa-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://nexa_user:nexa_password@postgres:5432/nexa_capital?schema=public
+      - JWT_SECRET=nexa_production_super_secret_jwt_key_2026
+      - JWT_REFRESH_SECRET=nexa_production_refresh_token_secret_key_2026
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    restart: always
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexa-postgres
+    environment:
+      POSTGRES_USER: nexa_user
+      POSTGRES_PASSWORD: nexa_password
+      POSTGRES_DB: nexa_capital
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexa-redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+volumes:
+  pgdata:

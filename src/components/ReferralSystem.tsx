@@ -1,0 +1,274 @@
+import React, { useState } from 'react';
+import {
+  Users,
+  Copy,
+  Check,
+  Share2,
+  Gift,
+  Award,
+  ArrowRight,
+  Send,
+  MessageCircle,
+  QrCode,
+  Sparkles,
+  ShieldCheck,
+  Zap,
+} from 'lucide-react';
+import { useApp } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
+
+export const ReferralSystem: React.FC = () => {
+  const { user, downlines, addNotification } = useApp();
+  const { theme } = useTheme();
+
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const referralLink = `https://capitalwavee.com/r/${user.referralCode}`;
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(user.referralCode);
+    setCopiedCode(true);
+    addNotification('Kode referral berhasil disalin!', 'success');
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(referralLink);
+    setCopiedLink(true);
+    addNotification('Link referral berhasil disalin!', 'success');
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const shareWhatsApp = () => {
+    const text = `Halo! Bergabunglah di ${theme.brandName}, platform investasi saham dengan profit harian otomatis. Gunakan kode referral saya ${user.referralCode} atau daftar via link berikut: ${referralLink}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const shareTelegram = () => {
+    const text = `Bergabunglah di ${theme.brandName}, platform investasi saham dengan profit harian otomatis. Kode referral: ${user.referralCode}`;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const totalCommission = downlines.reduce((acc, curr) => acc + curr.commissionEarned, 0);
+
+  return (
+    <div className="space-y-6 pb-12">
+      {/* Referral Hero Banner */}
+      <div
+        className="rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden shadow-lg"
+        style={{
+          background: `linear-gradient(135deg, ${theme.primaryColor} 0%, #0f172a 100%)`,
+        }}
+      >
+        <div className="relative z-10 max-w-3xl space-y-3">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black backdrop-blur-md">
+            <Gift className="w-3.5 h-3.5" />
+            <span>Sistem Komisi 3-Level Resmi</span>
+          </div>
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            Program Referral 3-Level (32% + 2% + 1%)
+          </h1>
+
+          <p className="text-slate-200 text-xs sm:text-sm leading-relaxed">
+            Dapatkan komisi investasi berjenjang dari setiap anggota tim Anda! Komisi diproses secara transparan dan dikonfirmasi melalui Admin Panel.
+          </p>
+        </div>
+      </div>
+
+      {/* 3 Level Commission Tier Explanatory Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Level 1 */}
+        <div className="bg-gradient-to-br from-amber-500/10 via-white to-amber-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-5 border-2 border-amber-500/30 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+              Level 1 (Direct)
+            </span>
+            <span className="px-2.5 py-1 bg-amber-500 text-slate-950 font-black text-xs rounded-full">
+              32% Komisi
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">
+            Anggota yang mendaftar langsung menggunakan link/kode referral Anda.
+          </p>
+          <div className="mt-3 p-2.5 bg-amber-100/50 dark:bg-amber-950/60 rounded-xl text-[11px] font-semibold text-amber-900 dark:text-amber-300">
+            Simulasi: Beli Produk 50k &rarr; Komisi <strong>Rp 16.000</strong>
+          </div>
+        </div>
+
+        {/* Level 2 */}
+        <div className="bg-gradient-to-br from-blue-500/10 via-white to-blue-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-5 border-2 border-blue-500/30 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black text-blue-700 dark:text-blue-400 uppercase tracking-wider">
+              Level 2 (Indirect)
+            </span>
+            <span className="px-2.5 py-1 bg-blue-600 text-white font-black text-xs rounded-full">
+              2% Komisi
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">
+            Anggota yang diundang oleh bawahan Level 1 Anda.
+          </p>
+          <div className="mt-3 p-2.5 bg-blue-100/50 dark:bg-blue-950/60 rounded-xl text-[11px] font-semibold text-blue-900 dark:text-blue-300">
+            Simulasi: Beli Produk 50k &rarr; Komisi <strong>Rp 1.000</strong>
+          </div>
+        </div>
+
+        {/* Level 3 */}
+        <div className="bg-gradient-to-br from-purple-500/10 via-white to-purple-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-5 border-2 border-purple-500/30 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black text-purple-700 dark:text-purple-400 uppercase tracking-wider">
+              Level 3 (Sub-Indirect)
+            </span>
+            <span className="px-2.5 py-1 bg-purple-600 text-white font-black text-xs rounded-full">
+              1% Komisi
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">
+            Anggota yang diundang oleh bawahan Level 2 Anda.
+          </p>
+          <div className="mt-3 p-2.5 bg-purple-100/50 dark:bg-purple-950/60 rounded-xl text-[11px] font-semibold text-purple-900 dark:text-purple-300">
+            Simulasi: Beli Produk 50k &rarr; Komisi <strong>Rp 500</strong>
+          </div>
+        </div>
+      </div>
+
+      {/* Unique Referral Link & Code Box */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Referral Code Box */}
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+            <Users className="w-4 h-4 text-blue-600" />
+            <span>Kode Referral Anda</span>
+          </h2>
+
+          <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+            <span className="font-mono text-lg font-extrabold text-blue-600 dark:text-blue-400 flex-1 tracking-wider">
+              {user.referralCode}
+            </span>
+            <button
+              onClick={handleCopyCode}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all flex items-center space-x-1"
+            >
+              {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedCode ? 'Tersalin' : 'Salin Kode'}</span>
+            </button>
+          </div>
+
+          {/* Social Share Buttons */}
+          <div className="pt-2">
+            <span className="text-[11px] text-slate-400 font-semibold block mb-2">Bagikan Langsung Ke:</span>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={shareWhatsApp}
+                className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span>WhatsApp</span>
+              </button>
+              <button
+                onClick={shareTelegram}
+                className="flex-1 py-2 px-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-colors"
+              >
+                <Send className="w-4 h-4" />
+                <span>Telegram</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Referral Link Box */}
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+            <Share2 className="w-4 h-4 text-emerald-600" />
+            <span>Link Pendaftaran Referral</span>
+          </h2>
+
+          <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+            <input
+              type="text"
+              readOnly
+              value={referralLink}
+              className="font-mono text-xs text-slate-600 dark:text-slate-300 bg-transparent flex-1 focus:outline-none truncate"
+            />
+            <button
+              onClick={handleCopyLink}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center space-x-1"
+            >
+              {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedLink ? 'Tersalin' : 'Salin Link'}</span>
+            </button>
+          </div>
+
+          <div className="p-3 bg-slate-900 text-white border border-slate-700 rounded-xl text-xs space-y-1">
+            <div className="flex items-center space-x-1 text-amber-400 font-bold">
+              <ShieldCheck className="w-4 h-4" />
+              <span>Prosedur Keamanan Admin:</span>
+            </div>
+            <p className="text-[11px] text-slate-300">
+              Setiap pencapaian komisi referral membutuhkan tinjauan dan konfirmasi dari <strong>Admin Panel</strong> sebelum dicairkan ke saldo penarikan Anda.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Referral Statistics */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4">
+          Statistik & Daftar Teman Terundang ({downlines.length})
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+            <span className="text-xs text-slate-400 font-semibold uppercase block">Total Member Terundang</span>
+            <span className="text-2xl font-extrabold text-slate-900 dark:text-white mt-1 block">
+              {downlines.length} Member
+            </span>
+          </div>
+
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+            <span className="text-xs text-slate-400 font-semibold uppercase block font-mono">Total Komisi Disetujui</span>
+            <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 block">
+              +Rp {user.totalReferralCommission.toLocaleString('id-ID')}
+            </span>
+          </div>
+        </div>
+
+        {/* Downline Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase font-semibold border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th className="px-4 py-3">Nama Member</th>
+                <th className="px-4 py-3">Level Referral</th>
+                <th className="px-4 py-3">Tanggal Bergabung</th>
+                <th className="px-4 py-3 text-right">Total Transaksi</th>
+                <th className="px-4 py-3 text-right">Komisi Anda</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
+              {downlines.map((d) => (
+                <tr key={d.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40">
+                  <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">{d.name}</td>
+                  <td className="px-4 py-3">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                      Level {d.level || 1} ({d.level === 3 ? '1%' : d.level === 2 ? '2%' : '32%'})
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{d.joinDate}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">
+                    Rp {d.totalSpent.toLocaleString('id-ID')}
+                  </td>
+                  <td className="px-4 py-3 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
+                    +Rp {d.commissionEarned.toLocaleString('id-ID')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};

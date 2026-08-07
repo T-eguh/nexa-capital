@@ -1,0 +1,44 @@
+{
+  "short_name": "Nexa Capital",
+  "name": "Nexa Capital — Enterprise Investment & Trading Platform",
+  "description": "Platform investasi saham, produk Fast Yield, dividen harian otomatis, dan laporan finansial eksekutif.",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#0d9488",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": [
+    "finance",
+    "business",
+    "productivity"
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Buka Dasbor Investasi",
+      "url": "/?tab=dashboard"
+    },
+    {
+      "name": "Katalog Produk",
+      "short_name": "Produk",
+      "description": "Jelajahi Produk Fast Yield",
+      "url": "/?tab=products"
+    }
+  ]
+}
