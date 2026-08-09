@@ -25,6 +25,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { NexaCapitalLogo } from './NexaCapitalLogo';
 import { UserProfileModal } from './profile/UserProfileModal';
 import { SecurityCenterModal } from './profile/SecurityCenterModal';
+import { VipStatusModal } from './VipStatusModal';
 import { LanguageSelector } from './LanguageSelector';
 import { SocialShareModal } from './SocialShareModal';
 import { Share2 } from 'lucide-react';
@@ -51,6 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isSecurityOpen, setIsSecurityOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
+  const [isVipModalOpen, setIsVipModalOpen] = useState(false);
 
   const roles = authUser?.roles || ['USER'];
 
@@ -107,9 +109,14 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center space-x-2.5">
               {/* Balance Badge & VIP level */}
               <div className="hidden sm:flex items-center space-x-2">
-                <span className="px-2.5 py-1 rounded-full bg-amber-400 text-slate-950 font-black text-xs shadow-sm">
-                  {user.vipLevel || 'VIP 0'}
-                </span>
+                <button
+                  onClick={() => setIsVipModalOpen(true)}
+                  className="px-2.5 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-sm flex items-center space-x-1 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                  title="Klik untuk melihat Status VIP & Keuntungan"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>{user.vipLevel || 'VIP 0'}</span>
+                </button>
 
                 {/* Role Badge */}
                 {roles.includes('SUPER_ADMIN') && (
@@ -321,6 +328,16 @@ export const Header: React.FC<HeaderProps> = ({
       <SocialShareModal
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
+      />
+
+      {/* VIP Status Membership Modal */}
+      <VipStatusModal
+        isOpen={isVipModalOpen}
+        onClose={() => setIsVipModalOpen(false)}
+        onSelectProductToBuy={() => {
+          setIsVipModalOpen(false);
+          setActiveTab('products');
+        }}
       />
     </>
   );

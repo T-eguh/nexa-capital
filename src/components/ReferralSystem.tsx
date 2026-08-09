@@ -80,56 +80,59 @@ export const ReferralSystem: React.FC = () => {
       {/* 3 Level Commission Tier Explanatory Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Level 1 */}
-        <div className="bg-gradient-to-br from-amber-500/10 via-white to-amber-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-5 border-2 border-amber-500/30 shadow-sm relative overflow-hidden">
+        <div className="bg-amber-950/20 dark:bg-slate-900/90 rounded-2xl p-5 border-2 border-amber-400 shadow-md relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider">
-              Level 1 (Direct)
+            <span className="text-sm font-black text-amber-600 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>Level 1 (Direct)</span>
             </span>
-            <span className="px-2.5 py-1 bg-amber-500 text-slate-950 font-black text-xs rounded-full">
+            <span className="px-3 py-1 bg-amber-400 text-slate-950 font-black text-xs rounded-full shadow-sm">
               32% Komisi
             </span>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">
+          <p className="text-xs text-slate-800 dark:text-slate-100 font-semibold mt-2 leading-relaxed">
             Anggota yang mendaftar langsung menggunakan link/kode referral Anda.
           </p>
-          <div className="mt-3 p-2.5 bg-amber-100/50 dark:bg-amber-950/60 rounded-xl text-[11px] font-semibold text-amber-900 dark:text-amber-300">
-            Simulasi: Beli Produk 50k &rarr; Komisi <strong>Rp 16.000</strong>
+          <div className="mt-3 p-3 bg-amber-400/15 border border-amber-400/40 rounded-xl text-xs font-extrabold text-amber-900 dark:text-amber-300">
+            Simulasi: Beli Produk 50k &rarr; Komisi <strong className="text-amber-700 dark:text-amber-200 text-sm">Rp 16.000</strong>
           </div>
         </div>
 
         {/* Level 2 */}
-        <div className="bg-gradient-to-br from-blue-500/10 via-white to-blue-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-5 border-2 border-blue-500/30 shadow-sm relative overflow-hidden">
+        <div className="bg-blue-950/20 dark:bg-slate-900/90 rounded-2xl p-5 border-2 border-blue-400 shadow-md relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-black text-blue-700 dark:text-blue-400 uppercase tracking-wider">
-              Level 2 (Indirect)
+            <span className="text-sm font-black text-blue-600 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1">
+              <Zap className="w-4 h-4 text-blue-400" />
+              <span>Level 2 (Indirect)</span>
             </span>
-            <span className="px-2.5 py-1 bg-blue-600 text-white font-black text-xs rounded-full">
+            <span className="px-3 py-1 bg-blue-500 text-white font-black text-xs rounded-full shadow-sm">
               2% Komisi
             </span>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">
+          <p className="text-xs text-slate-800 dark:text-slate-100 font-semibold mt-2 leading-relaxed">
             Anggota yang diundang oleh bawahan Level 1 Anda.
           </p>
-          <div className="mt-3 p-2.5 bg-blue-100/50 dark:bg-blue-950/60 rounded-xl text-[11px] font-semibold text-blue-900 dark:text-blue-300">
-            Simulasi: Beli Produk 50k &rarr; Komisi <strong>Rp 1.000</strong>
+          <div className="mt-3 p-3 bg-blue-400/15 border border-blue-400/40 rounded-xl text-xs font-extrabold text-blue-900 dark:text-blue-300">
+            Simulasi: Beli Produk 50k &rarr; Komisi <strong className="text-blue-700 dark:text-blue-200 text-sm">Rp 1.000</strong>
           </div>
         </div>
 
         {/* Level 3 */}
-        <div className="bg-gradient-to-br from-purple-500/10 via-white to-purple-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-5 border-2 border-purple-500/30 shadow-sm relative overflow-hidden">
+        <div className="bg-purple-950/20 dark:bg-slate-900/90 rounded-2xl p-5 border-2 border-purple-400 shadow-md relative overflow-hidden">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-black text-purple-700 dark:text-purple-400 uppercase tracking-wider">
-              Level 3 (Sub-Indirect)
+            <span className="text-sm font-black text-purple-600 dark:text-purple-300 uppercase tracking-wider flex items-center gap-1">
+              <Award className="w-4 h-4 text-purple-400" />
+              <span>Level 3 (Sub-Indirect)</span>
             </span>
-            <span className="px-2.5 py-1 bg-purple-600 text-white font-black text-xs rounded-full">
+            <span className="px-3 py-1 bg-purple-500 text-white font-black text-xs rounded-full shadow-sm">
               1% Komisi
             </span>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">
+          <p className="text-xs text-slate-800 dark:text-slate-100 font-semibold mt-2 leading-relaxed">
             Anggota yang diundang oleh bawahan Level 2 Anda.
           </p>
-          <div className="mt-3 p-2.5 bg-purple-100/50 dark:bg-purple-950/60 rounded-xl text-[11px] font-semibold text-purple-900 dark:text-purple-300">
-            Simulasi: Beli Produk 50k &rarr; Komisi <strong>Rp 500</strong>
+          <div className="mt-3 p-3 bg-purple-400/15 border border-purple-400/40 rounded-xl text-xs font-extrabold text-purple-900 dark:text-purple-300">
+            Simulasi: Beli Produk 50k &rarr; Komisi <strong className="text-purple-700 dark:text-purple-200 text-sm">Rp 500</strong>
           </div>
         </div>
       </div>
@@ -158,7 +161,7 @@ export const ReferralSystem: React.FC = () => {
 
           {/* Social Share Buttons */}
           <div className="pt-2">
-            <span className="text-[11px] text-slate-400 font-semibold block mb-2">Bagikan Langsung Ke:</span>
+            <span className="text-[11px] text-slate-700 dark:text-slate-200 font-bold block mb-2">Bagikan Langsung Ke:</span>
             <div className="flex items-center space-x-2">
               <button
                 onClick={shareWhatsApp}
@@ -220,15 +223,15 @@ export const ReferralSystem: React.FC = () => {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
-            <span className="text-xs text-slate-400 font-semibold uppercase block">Total Member Terundang</span>
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+            <span className="text-xs text-slate-700 dark:text-slate-200 font-bold uppercase block">Total Member Terundang</span>
             <span className="text-2xl font-extrabold text-slate-900 dark:text-white mt-1 block">
               {downlines.length} Member
             </span>
           </div>
 
-          <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
-            <span className="text-xs text-slate-400 font-semibold uppercase block font-mono">Total Komisi Disetujui</span>
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+            <span className="text-xs text-slate-700 dark:text-slate-200 font-bold uppercase block font-mono">Total Komisi Disetujui</span>
             <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 block">
               +Rp {user.totalReferralCommission.toLocaleString('id-ID')}
             </span>
@@ -238,33 +241,51 @@ export const ReferralSystem: React.FC = () => {
         {/* Downline Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 dark:bg-slate-900 text-slate-500 uppercase font-semibold border-b border-slate-200 dark:border-slate-700">
+            <thead className="bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 uppercase font-extrabold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="px-4 py-3">Nama Member</th>
-                <th className="px-4 py-3">Level Referral</th>
-                <th className="px-4 py-3">Tanggal Bergabung</th>
-                <th className="px-4 py-3 text-right">Total Transaksi</th>
-                <th className="px-4 py-3 text-right">Komisi Anda</th>
+                <th className="px-4 py-3.5">Nama Member</th>
+                <th className="px-4 py-3.5">Level Referral</th>
+                <th className="px-4 py-3.5">Tanggal Bergabung</th>
+                <th className="px-4 py-3.5 text-right">Total Transaksi</th>
+                <th className="px-4 py-3.5 text-right">Komisi Anda</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
-              {downlines.map((d) => (
-                <tr key={d.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40">
-                  <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">{d.name}</td>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                      Level {d.level || 1} ({d.level === 3 ? '1%' : d.level === 2 ? '2%' : '32%'})
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{d.joinDate}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-slate-900 dark:text-white">
-                    Rp {d.totalSpent.toLocaleString('id-ID')}
-                  </td>
-                  <td className="px-4 py-3 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
-                    +Rp {d.commissionEarned.toLocaleString('id-ID')}
-                  </td>
-                </tr>
-              ))}
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700/60">
+              {downlines.map((d) => {
+                const lvl = d.level || 1;
+                return (
+                  <tr key={d.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors">
+                    <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">{d.name}</td>
+                    <td className="px-4 py-3">
+                      {lvl === 1 && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-amber-400 text-slate-950 inline-flex items-center gap-1 shadow-sm">
+                          <Sparkles className="w-3 h-3" />
+                          <span>Level 1 (32%)</span>
+                        </span>
+                      )}
+                      {lvl === 2 && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-blue-600 text-white inline-flex items-center gap-1 shadow-sm">
+                          <Zap className="w-3 h-3" />
+                          <span>Level 2 (2%)</span>
+                        </span>
+                      )}
+                      {lvl === 3 && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-purple-600 text-white inline-flex items-center gap-1 shadow-sm">
+                          <Award className="w-3 h-3" />
+                          <span>Level 3 (1%)</span>
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200">{d.joinDate}</td>
+                    <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-white">
+                      Rp {d.totalSpent.toLocaleString('id-ID')}
+                    </td>
+                    <td className="px-4 py-3 text-right font-black text-emerald-600 dark:text-emerald-400 text-sm">
+                      +Rp {d.commissionEarned.toLocaleString('id-ID')}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

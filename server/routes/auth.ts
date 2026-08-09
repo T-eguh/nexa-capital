@@ -19,23 +19,14 @@ const router = Router();
 
 // Zod Schemas
 const registerSchema = z.object({
-  fullName: z.string().min(3, 'Nama lengkap minimal 3 karakter'),
-  username: z.string().min(3, 'Username minimal 3 karakter').regex(/^[a-zA-Z0-9_]+$/, 'Username hanya boleh huruf, angka, dan underscore'),
-  email: z.string().email('Format email tidak valid'),
-  phone: z.string().min(10, 'Nomor HP minimal 10 digit'),
-  password: z
-    .string()
-    .min(8, 'Kata sandi minimal 8 karakter')
-    .regex(/[A-Z]/, 'Kata sandi harus mengandung minimal 1 huruf besar')
-    .regex(/[a-z]/, 'Kata sandi harus mengandung minimal 1 huruf kecil')
-    .regex(/[0-9]/, 'Kata sandi harus mengandung minimal 1 angka')
-    .regex(/[^a-zA-Z0-9]/, 'Kata sandi harus mengandung minimal 1 karakter khusus (!@#$%^&*)'),
-  confirmPassword: z.string(),
+  fullName: z.string().min(2, 'Nama lengkap minimal 2 karakter'),
+  phone: z.string().min(8, 'Nomor HP minimal 8 digit'),
+  password: z.string().min(6, 'Kata sandi minimal 6 karakter'),
+  username: z.string().optional(),
+  email: z.string().optional(),
+  confirmPassword: z.string().optional(),
   referralCode: z.string().optional(),
-  acceptTerms: z.boolean().refine((val) => val === true, 'Anda harus menyetujui syarat & ketentuan'),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Konfirmasi kata sandi tidak cocok dengan kata sandi',
-  path: ['confirmPassword'],
+  acceptTerms: z.boolean().optional(),
 });
 
 const loginSchema = z.object({
@@ -75,20 +66,16 @@ router.post('/register', async (req: Request, res: Response) => {
   try {
     const validatedData = registerSchema.parse(req.body);
 
-    // Check duplicate Email & Username
-    const existingEmail = db.findUserByEmailOrUsername(validatedData.email);
-    if (existingEmail) {
-      return res.status(400).json({
-        success: false,
-        message: 'Alamat email ini sudah terdaftar. Silakan gunakan email lain atau masuk ke akun Anda.',
-      });
-    }
+    const cleanPhone = validatedData.phone.replace(/[^0-9]/g, '');
+    const username = (validatedData.username || `user_${cleanPhone}`).toLowerCase();
+    const email = (validatedData.email || `${cleanPhone}@nexacapital.id`).toLowerCase();
 
-    const existingUsername = db.findUserByEmailOrUsername(validatedData.username);
-    if (existingUsername) {
+    // Check duplicate Email & Username
+    const existingEmail = db.findUserByEmailOrUsername(email);
+    if (existingEmail && validatedData.email) {
       return res.status(400).json({
         success: false,
-        message: 'Username ini sudah digunakan. Harap pilih username yang unik.',
+        message: 'Nomor HP atau Email ini sudah terdaftar. Silakan gunakan nomor/email lain atau masuk ke akun Anda.',
       });
     }
 
@@ -98,12 +85,12 @@ router.post('/register', async (req: Request, res: Response) => {
     // Create User
     const newUser = db.createUser({
       fullName: validatedData.fullName,
-      username: validatedData.username.toLowerCase(),
-      email: validatedData.email.toLowerCase(),
+      username,
+      email,
       phone: validatedData.phone,
       passwordHash,
       referredByCode: validatedData.referralCode,
-      isEmailVerified: false,
+      isEmailVerified: true,
     });
 
     // Generate Verification Token
@@ -152,7 +139,7 @@ router.post('/login', async (req: Request, res: Response) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Email, Username, atau kata sandi tidak cocok.',
+        message: 'No HP, Email, Username, atau kata sandi tidak cocok.',
       });
     }
 

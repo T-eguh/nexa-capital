@@ -23,23 +23,42 @@ export interface Transaction {
   referralLevel?: 1 | 2 | 3;
 }
 
-export type VipLevel = 'VIP 0' | 'VIP 1' | 'VIP 2' | 'VIP 3';
+export type VipLevel =
+  | 'VIP 0'
+  | 'VIP 1'
+  | 'VIP 2'
+  | 'VIP 3'
+  | 'VIP 4'
+  | 'VIP 5'
+  | 'VIP 6'
+  | 'VIP 7'
+  | 'VIP 8';
 
 export interface InvestmentProduct {
   id: string;
   name: string;
-  category: 'Saham Bluechip' | 'Dividend High Yield' | 'Sektor Teknologi' | 'Obligasi & Reksa Dana' | 'Kripto Index' | 'Fast Yield VIP';
-  price: number; // e.g. Rp 50,000
+  category: string;
+  productGroup?: 'Smart AI' | 'Special AI';
+  price: number; // Modal aktivasi e.g. Rp 50.000 / Rp 30.000
   durationDays: number; // e.g. 35, 3, or 1 day(s)
   dailyProfitPct: number; // e.g. 2.5%
-  totalProfitAmount: number; // e.g. Rp 43,750
+  dailyProfitAmount?: number; // Dividen harian in Rp
+  totalProfitAmount: number; // Estimasi hasil in Rp
   totalReturnPct: number; // e.g. 87.5%
   riskLevel: 'Rendah' | 'Sedang' | 'Tinggi';
   status: 'active' | 'inactive';
   description: string;
   imageUrl: string;
   tags: string[];
-  requiredVipLevel?: VipLevel; // Required VIP level for 1H or 3H products
+  requiredVipLevel?: VipLevel; // Required VIP level e.g. VIP 1, VIP 2
+  minVipLevel?: string;
+  performance30d?: string; // e.g. "+120,94%"
+  marketPrice?: string; // e.g. "2.078,73"
+  marketHigh?: string; // e.g. "1.086,98"
+  riskBars?: number;
+  profitBars?: number;
+  efficiencyBars?: number;
+  isLockable35H?: boolean;
 }
 
 export interface UserInvestment {

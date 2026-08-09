@@ -98,7 +98,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [products, setProducts] = useState<InvestmentProduct[]>(() => {
     const saved = localStorage.getItem('nexainvest_products');
-    return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const hasSpecial = parsed.some((p: InvestmentProduct) => p.productGroup === 'Special AI' || (p.name && p.name.startsWith('Special')));
+          const hasSmart = parsed.some((p: InvestmentProduct) => p.productGroup === 'Smart AI' || (p.name && p.name.startsWith('Smart')));
+          if (hasSpecial && hasSmart && parsed.length >= 10) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing stored products:', e);
+      }
+    }
+    return INITIAL_PRODUCTS;
   });
 
   const [userInvestments, setUserInvestments] = useState<UserInvestment[]>(() => {
@@ -130,11 +144,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return savedAuth === 'true';
   });
 
+  const vipRankMap: Record<string, number> = {
+    'VIP 0': 0,
+    'VIP 1': 1,
+    'VIP 2': 2,
+    'VIP 3': 3,
+    'VIP 4': 4,
+    'VIP 5': 5,
+    'VIP 6': 6,
+    'VIP 7': 7,
+    'VIP 8': 8,
+  };
+
   // Helper to determine VIP level based on totalInvested
   const calculateVipLevel = (totalInvested: number): VipLevel => {
-    if (totalInvested >= 2000000) return 'VIP 3';
-    if (totalInvested >= 500000) return 'VIP 2';
-    if (totalInvested >= 100000) return 'VIP 1';
+    if (totalInvested >= 120000000) return 'VIP 8';
+    if (totalInvested >= 50000000) return 'VIP 7';
+    if (totalInvested >= 40000000) return 'VIP 6';
+    if (totalInvested >= 25000000) return 'VIP 5';
+    if (totalInvested >= 10000000) return 'VIP 4';
+    if (totalInvested >= 4500000) return 'VIP 3';
+    if (totalInvested >= 750000) return 'VIP 2';
+    if (totalInvested >= 50000) return 'VIP 1';
     return 'VIP 0';
   };
 
@@ -274,18 +305,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { success: false, message: 'Produk sedang tidak aktif.' };
     }
 
-    // Check VIP Requirements for 1H or 3H products
-    if (product.durationDays === 3 && user.vipLevel === 'VIP 0') {
-      return {
-        success: false,
-        message: 'Produk durasi 3 Hari hanya dapat dibeli oleh Akun VIP 1 ke atas (Total investasi min Rp 100.000).',
-      };
-    }
-    if (product.durationDays === 1 && (user.vipLevel === 'VIP 0' || user.vipLevel === 'VIP 1')) {
-      return {
-        success: false,
-        message: 'Produk durasi 1 Hari hanya dapat dibeli oleh Akun VIP 2 ke atas (Total investasi min Rp 500.000).',
-      };
+    // Check VIP Requirements for short-term or VIP-restricted products
+    const requiredVipStr = product.requiredVipLevel || product.minVipLevel;
+    if (requiredVipStr && requiredVipStr !== 'VIP 0') {
+      const userRank = vipRankMap[user.vipLevel || 'VIP 0'] ?? 0;
+      const reqRank = vipRankMap[requiredVipStr] ?? 0;
+      if (userRank < reqRank) {
+        return {
+          success: false,
+          message: `Pembelian gagal: Syarat pembelian minimal ${requiredVipStr}. Akun Anda saat ini ${user.vipLevel || 'VIP 0'}.`,
+        };
+      }
     }
 
     if (user.saldoPenarikan < product.price) {
@@ -433,7 +463,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }));
 
         const maturityTx: Transaction = {
-          id: `tx-mat-${Date.now()}`,
+          id: `tx-mat-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           userId: user.id,
           type: 'MATURITY_PAYOUT',
           amount: totalPayout,
@@ -453,7 +483,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }));
 
         const profitTx: Transaction = {
-          id: `tx-p-${Date.now()}`,
+          id: `tx-p-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           userId: user.id,
           type: 'DAILY_PROFIT',
           amount: dailyProfitAmount,
@@ -474,7 +504,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }));
 
       const profitTx: Transaction = {
-        id: `tx-p-${Date.now()}`,
+        id: `tx-p-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         userId: user.id,
         type: 'DAILY_PROFIT',
         amount: dailyProfitAmount,
@@ -536,10 +566,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const todayStr = new Date().toISOString().split('T')[0];
 
     // Check 1x per day rule
-    if (user.lastWithdrawalDate === todayStr) {
+    const hasWithdrawnToday =
+      user.lastWithdrawalDate === todayStr ||
+      transactions.some(
+        (tx) => tx.userId === user.id && tx.type === 'WITHDRAWAL' && tx.date.startsWith(todayStr)
+      );
+
+    if (hasWithdrawnToday) {
       return {
         success: false,
-        message: 'Penarikan hanya dapat dilakukan 1 kali dalam sehari. Harap coba lagi esok hari.',
+        message: 'penarikan cuman bisa dilakukan sekali dalam sehari, coba lagi di keesokan harinya',
       };
     }
 

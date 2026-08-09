@@ -144,7 +144,7 @@ export const TransactionsHistory: React.FC = () => {
           </div>
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-slate-700/60">
-            {paginatedTxs.map((tx) => {
+            {paginatedTxs.map((tx, idx) => {
               const isPlus =
                 tx.type === 'DEPOSIT' ||
                 tx.type === 'DAILY_PROFIT' ||
@@ -154,7 +154,7 @@ export const TransactionsHistory: React.FC = () => {
 
               return (
                 <div
-                  key={tx.id}
+                  key={`${tx.id}-${idx}`}
                   className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors"
                 >
                   <div className="flex items-start space-x-3 sm:space-x-4">

@@ -15,25 +15,54 @@ import {
   CreditCard,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import apiClient from '../services/api';
 
 export const FinancialLedgerView: React.FC = () => {
-  const { authFetch } = useApp();
   const [ledgerEntries, setLedgerEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('ALL');
   const [filterWallet, setFilterWallet] = useState<string>('ALL');
 
+  const { transactions } = useApp();
+
   const fetchLedger = async () => {
     setLoading(true);
     try {
-      const res = await authFetch('/api/payments/ledger');
-      if (res.ok) {
-        const data = await res.json();
-        setLedgerEntries(data.ledger || []);
+      const res = await apiClient.get('/payments/ledger');
+      if (res.data && res.data.ledger && res.data.ledger.length > 0) {
+        setLedgerEntries(res.data.ledger);
+      } else if (transactions && transactions.length > 0) {
+        // Fallback to local transactions formatted as ledger
+        const localLedger = transactions.map((tx) => ({
+          id: tx.id,
+          referenceNo: tx.referenceNo || `TX-${tx.id}`,
+          type: tx.type === 'DEPOSIT' || tx.type === 'PROFIT_CLAIM' || tx.type === 'COMMISSION' ? 'CREDIT' : 'DEBIT',
+          walletType: 'MAIN',
+          amount: tx.amount,
+          balanceBefore: tx.balanceBefore || 0,
+          balanceAfter: tx.balanceAfter || tx.amount,
+          description: tx.description || `${tx.type} Transaction`,
+          createdAt: tx.date || new Date().toISOString(),
+        }));
+        setLedgerEntries(localLedger);
       }
     } catch (err) {
-      console.error('Failed to fetch financial ledger', err);
+      console.warn('Financial ledger fetch fallback:', err);
+      if (transactions && transactions.length > 0) {
+        const localLedger = transactions.map((tx) => ({
+          id: tx.id,
+          referenceNo: tx.referenceNo || `TX-${tx.id}`,
+          type: tx.type === 'DEPOSIT' || tx.type === 'PROFIT_CLAIM' || tx.type === 'COMMISSION' ? 'CREDIT' : 'DEBIT',
+          walletType: 'MAIN',
+          amount: tx.amount,
+          balanceBefore: tx.balanceBefore || 0,
+          balanceAfter: tx.balanceAfter || tx.amount,
+          description: tx.description || `${tx.type} Transaction`,
+          createdAt: tx.date || new Date().toISOString(),
+        }));
+        setLedgerEntries(localLedger);
+      }
     } finally {
       setLoading(false);
     }

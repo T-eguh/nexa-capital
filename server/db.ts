@@ -713,10 +713,36 @@ class InMemoryDatabase {
   }
 
   findUserByEmailOrUsername(identifier: string): UserEntity | undefined {
+    if (!identifier) return undefined;
     const clean = identifier.trim().toLowerCase();
-    return this.users.find(
-      (u) => u.email.toLowerCase() === clean || u.username.toLowerCase() === clean
-    );
+    const cleanDigits = clean.replace(/[^0-9]/g, '');
+
+    return this.users.find((u) => {
+      if (!u) return false;
+      const uEmail = (u.email || '').toLowerCase();
+      const uUsername = (u.username || '').toLowerCase();
+      const uFullName = (u.fullName || '').toLowerCase();
+      const uPhone = (u.phone || '').trim().toLowerCase();
+      const userPhoneDigits = uPhone.replace(/[^0-9]/g, '');
+
+      if (uEmail === clean || uUsername === clean || uPhone === clean || uFullName === clean) {
+        return true;
+      }
+
+      if (cleanDigits.length >= 6 && userPhoneDigits.length >= 6) {
+        if (
+          userPhoneDigits === cleanDigits ||
+          userPhoneDigits.endsWith(cleanDigits) ||
+          cleanDigits.endsWith(userPhoneDigits) ||
+          userPhoneDigits.includes(cleanDigits) ||
+          cleanDigits.includes(userPhoneDigits)
+        ) {
+          return true;
+        }
+      }
+
+      return false;
+    });
   }
 
   createUser(data: Partial<UserEntity>): UserEntity {

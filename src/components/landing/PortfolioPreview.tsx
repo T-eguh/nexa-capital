@@ -115,17 +115,17 @@ export const PortfolioPreview: React.FC<{ lang: 'ID' | 'EN' }> = ({ lang }) => {
           {activeTab === 'REFERRAL' && (
             <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 animate-fade-in">
               <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Level 1 (32%)</p>
-                  <p className="text-lg font-black text-emerald-400 font-mono">12 Member</p>
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-amber-500/30">
+                  <p className="text-xs text-amber-400 font-extrabold uppercase">Level 1 (32%)</p>
+                  <p className="text-lg font-black text-amber-300 font-mono mt-0.5">12 Member</p>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Level 2 (2%)</p>
-                  <p className="text-lg font-black text-blue-400 font-mono">24 Member</p>
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-blue-500/30">
+                  <p className="text-xs text-blue-400 font-extrabold uppercase">Level 2 (2%)</p>
+                  <p className="text-lg font-black text-blue-300 font-mono mt-0.5">24 Member</p>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase">Level 3 (1%)</p>
-                  <p className="text-lg font-black text-purple-400 font-mono">48 Member</p>
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-purple-500/30">
+                  <p className="text-xs text-purple-400 font-extrabold uppercase">Level 3 (1%)</p>
+                  <p className="text-lg font-black text-purple-300 font-mono mt-0.5">48 Member</p>
                 </div>
               </div>
             </div>

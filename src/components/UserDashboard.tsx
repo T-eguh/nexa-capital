@@ -38,6 +38,7 @@ import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { WalletTransferModal } from './WalletTransferModal';
 import { GlobalSearchModal } from './GlobalSearchModal';
+import { VipStatusModal } from './VipStatusModal';
 
 interface UserDashboardProps {
   setActiveTab: (tab: string) => void;
@@ -65,6 +66,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isVipModalOpen, setIsVipModalOpen] = useState(false);
 
   const activeInvs = userInvestments.filter((i) => i.status === 'ACTIVE');
   const totalActiveInvestmentValue = activeInvs.reduce((acc, curr) => acc + curr.amountInvested, 0);
@@ -88,10 +90,14 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center space-x-2 mb-3">
-              <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black shadow-sm">
+              <button
+                onClick={() => setIsVipModalOpen(true)}
+                className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black shadow-sm transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+                title="Lihat Status VIP & Keuntungan"
+              >
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>{user.vipLevel || 'VIP 0'}</span>
-              </span>
+              </button>
               <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-white/15 text-white text-xs font-semibold backdrop-blur-md">
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 <span>Akun Terverifikasi</span>
@@ -105,16 +111,27 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             </p>
 
             {/* VIP Level Info Box */}
-            <div className="mt-4 p-3.5 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md max-w-lg text-xs">
+            <div
+              onClick={() => setIsVipModalOpen(true)}
+              className="mt-4 p-3.5 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 backdrop-blur-md max-w-lg text-xs cursor-pointer transition-all group"
+            >
               <div className="flex justify-between items-center mb-1 font-semibold">
-                <span>Tingkat VIP: <strong className="text-amber-300">{user.vipLevel}</strong></span>
-                <span>Total Investasi: <strong>Rp {(user.totalInvested || 150000).toLocaleString('id-ID')}</strong></span>
+                <span className="flex items-center gap-1.5">
+                  Tingkat VIP: <strong className="text-amber-300 font-bold">{user.vipLevel}</strong>
+                  <ChevronRight className="w-3.5 h-3.5 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+                </span>
+                <span>Total Investasi: <strong>Rp {(user.totalInvested || 0).toLocaleString('id-ID')}</strong></span>
               </div>
               <p className="text-[11px] text-slate-300">
-                {user.vipLevel === 'VIP 0' && 'Tingkatkan total investasi ke Rp 100.000 untuk naik ke VIP 1 & buka Paket Durasi 3 Hari!'}
-                {user.vipLevel === 'VIP 1' && 'Tingkatkan total investasi ke Rp 500.000 untuk naik ke VIP 2 & buka Paket Durasi 1 Hari!'}
-                {user.vipLevel === 'VIP 2' && 'Tingkatkan total investasi ke Rp 2.000.000 untuk naik ke VIP 3 Exclusive!'}
-                {user.vipLevel === 'VIP 3' && 'Selamat! Anda memegang tingkat VIP tertinggi dengan akses seluruh fitur Fast Yield!'}
+                {user.vipLevel === 'VIP 0' && 'Tingkatkan total investasi ke Rp 50.000 untuk naik ke VIP 1 & buka Paket Special AI 1!'}
+                {user.vipLevel === 'VIP 1' && 'Tingkatkan total investasi ke Rp 750.000 untuk naik ke VIP 2 & buka Paket Special AI 2!'}
+                {user.vipLevel === 'VIP 2' && 'Tingkatkan total investasi ke Rp 4.500.000 untuk naik ke VIP 3 & buka Paket Special AI 3!'}
+                {user.vipLevel === 'VIP 3' && 'Tingkatkan total investasi ke Rp 10.000.000 untuk naik ke VIP 4 & buka Paket Special AI 4!'}
+                {user.vipLevel === 'VIP 4' && 'Tingkatkan total investasi ke Rp 25.000.000 untuk naik ke VIP 5 & buka Paket Special AI 5!'}
+                {user.vipLevel === 'VIP 5' && 'Tingkatkan total investasi ke Rp 40.000.000 untuk naik ke VIP 6 & buka Paket Special AI 6!'}
+                {user.vipLevel === 'VIP 6' && 'Tingkatkan total investasi ke Rp 50.000.000 untuk naik ke VIP 7 & buka Paket Special AI 7!'}
+                {user.vipLevel === 'VIP 7' && 'Tingkatkan total investasi ke Rp 120.000.000 untuk naik ke VIP 8 & buka Paket Special AI 8!'}
+                {user.vipLevel === 'VIP 8' && 'Selamat! Anda memegang tingkat VIP 8 tertinggi dengan seluruh akses paket spesial!'}
               </p>
             </div>
           </div>
@@ -147,112 +164,148 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       </div>
 
       {/* QUICK ACTIONS BAR */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm">
-        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-3">Akses Cepat Pengguna</span>
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 text-center text-xs">
+      <div className="bg-white dark:bg-slate-800/90 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm">
+        <div className="flex items-center justify-between mb-3.5">
+          <span className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+            <Zap className="w-4 h-4 text-amber-500" />
+            <span>Akses Cepat Member</span>
+          </span>
+          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Pintasan Fitur Utama</span>
+        </div>
+        <div className="grid grid-cols-4 sm:grid-cols-9 gap-2.5 text-center text-xs">
           <button
             onClick={openDepositModal}
-            className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5"
+            className="p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/70 dark:hover:bg-blue-900/80 text-blue-700 dark:text-blue-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-blue-200 dark:border-blue-800/50"
           >
-            <ArrowDownLeft className="w-5 h-5" />
+            <ArrowDownLeft className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             <span className="text-[11px]">Deposit</span>
           </button>
 
           <button
             onClick={openWithdrawModal}
-            className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 font-bold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5"
+            className="p-3 rounded-2xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/70 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-amber-200 dark:border-amber-800/50"
           >
-            <ArrowUpRight className="w-5 h-5" />
+            <ArrowUpRight className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             <span className="text-[11px]">Penarikan</span>
           </button>
 
           <button
             onClick={() => setActiveTab('products')}
-            className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 font-bold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5"
+            className="p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/70 dark:hover:bg-emerald-900/80 text-emerald-800 dark:text-emerald-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-emerald-200 dark:border-emerald-800/50"
           >
-            <TrendingUp className="w-5 h-5" />
-            <span className="text-[11px]">Investasi</span>
+            <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-[11px]">Beli Paket</span>
           </button>
 
           <button
             onClick={() => setIsTransferModalOpen(true)}
-            className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 font-bold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5"
+            className="p-3 rounded-2xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/70 dark:hover:bg-purple-900/80 text-purple-800 dark:text-purple-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-purple-200 dark:border-purple-800/50"
           >
-            <ArrowLeftRight className="w-5 h-5" />
-            <span className="text-[11px]">Transfer</span>
+            <ArrowLeftRight className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <span className="text-[11px]">Pindah Saldo</span>
           </button>
 
           <button
             onClick={() => setActiveTab('referral')}
-            className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5"
+            className="p-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/70 dark:hover:bg-indigo-900/80 text-indigo-800 dark:text-indigo-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-indigo-200 dark:border-indigo-800/50"
           >
-            <Users className="w-5 h-5" />
+            <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             <span className="text-[11px]">Referral</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('history')}
-            className="p-3 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 font-bold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5"
+            onClick={() => setActiveTab('portfolio')}
+            className="p-3 rounded-2xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/70 dark:hover:bg-rose-900/80 text-rose-800 dark:text-rose-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-rose-200 dark:border-rose-800/50"
           >
-            <FileText className="w-5 h-5" />
-            <span className="text-[11px]">Transaksi</span>
+            <PieChart className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+            <span className="text-[11px]">Portofolio</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('history')}
+            className="p-3 rounded-2xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/70 dark:hover:bg-sky-900/80 text-sky-800 dark:text-sky-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-sky-200 dark:border-sky-800/50"
+          >
+            <FileText className="w-5 h-5 text-sky-600 dark:text-sky-400" />
+            <span className="text-[11px]">Riwayat</span>
           </button>
 
           <button
             onClick={() => setActiveTab('ledger')}
-            className="p-3 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400 font-bold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5"
+            className="p-3 rounded-2xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/70 dark:hover:bg-teal-900/80 text-teal-800 dark:text-teal-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-teal-200 dark:border-teal-800/50"
           >
-            <CreditCard className="w-5 h-5" />
+            <CreditCard className="w-5 h-5 text-teal-600 dark:text-teal-400" />
             <span className="text-[11px]">Ledger</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('portfolio')}
-            className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 font-bold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5"
-          >
-            <PieChart className="w-5 h-5" />
-            <span className="text-[11px]">Portofolio</span>
           </button>
 
           <a
             href={theme.supportTelegram}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-3 rounded-xl bg-cyan-50 dark:bg-cyan-950/60 text-cyan-600 dark:text-cyan-400 font-bold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5"
+            className="p-3 rounded-2xl bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/70 dark:hover:bg-cyan-900/80 text-cyan-800 dark:text-cyan-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-cyan-200 dark:border-cyan-800/50"
           >
-            <Send className="w-5 h-5" />
-            <span className="text-[11px]">Support</span>
+            <Send className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+            <span className="text-[11px]">CS Bantuan</span>
           </a>
+        </div>
+      </div>
+
+      {/* PANDUAN RINGKAS UNTUK MEMBER */}
+      <div className="bg-gradient-to-r from-blue-900/90 via-slate-900 to-indigo-950 text-white rounded-2xl p-5 border border-blue-500/30 shadow-md">
+        <div className="flex items-center space-x-2 mb-3">
+          <HelpCircle className="w-5 h-5 text-amber-400" />
+          <h3 className="text-sm font-black text-white">Panduan 4 Langkah Alur Member</h3>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div className="p-3 bg-white/10 rounded-xl border border-white/10 text-xs">
+            <span className="px-2 py-0.5 rounded bg-blue-500 text-white font-black text-[10px] uppercase block w-fit mb-1.5">Langkah 1</span>
+            <p className="font-extrabold text-amber-300">Deposit Saldo</p>
+            <p className="text-[11px] text-slate-200 mt-0.5">Isi ulang saldo via QRIS, E-Wallet, atau Transfer Bank.</p>
+          </div>
+          <div className="p-3 bg-white/10 rounded-xl border border-white/10 text-xs">
+            <span className="px-2 py-0.5 rounded bg-emerald-500 text-white font-black text-[10px] uppercase block w-fit mb-1.5">Langkah 2</span>
+            <p className="font-extrabold text-amber-300">Beli Paket Saham</p>
+            <p className="text-[11px] text-slate-200 mt-0.5">Pilih paket investasi Special AI (3H) atau Smart AI (35H).</p>
+          </div>
+          <div className="p-3 bg-white/10 rounded-xl border border-white/10 text-xs">
+            <span className="px-2 py-0.5 rounded bg-purple-500 text-white font-black text-[10px] uppercase block w-fit mb-1.5">Langkah 3</span>
+            <p className="font-extrabold text-amber-300">Klaim Dividen Harian</p>
+            <p className="text-[11px] text-slate-200 mt-0.5">Dividen cair otomatis setiap 24 jam sekali dari paket aktif.</p>
+          </div>
+          <div className="p-3 bg-white/10 rounded-xl border border-white/10 text-xs">
+            <span className="px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-black text-[10px] uppercase block w-fit mb-1.5">Langkah 4</span>
+            <p className="font-extrabold text-amber-300">Penarikan Dana</p>
+            <p className="text-[11px] text-slate-200 mt-0.5">Tarik saldo penarikan utama langsung ke rekening bank Anda.</p>
+          </div>
         </div>
       </div>
 
       {/* WALLET BALANCES MATRIX (5 WALLETS) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Wallet 1: Saldo Penarikan */}
-        <div className="bg-gradient-to-br from-emerald-950/20 via-white to-emerald-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-5 border-2 border-emerald-500/30 shadow-md relative overflow-hidden">
+        <div className="bg-gradient-to-br from-emerald-950/20 via-white to-emerald-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-5 border-2 border-emerald-500/40 shadow-md relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
-              Saldo Penarikan
+            <span className="text-[11px] font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
+              Saldo Penarikan Utama
             </span>
             <div className="p-2 rounded-xl bg-emerald-500 text-white shadow-sm">
               <Wallet className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+            <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-emerald-300">
               Rp {(user.saldoPenarikan ?? 250000).toLocaleString('id-ID')}
             </span>
-            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 flex items-center space-x-1">
-              <CheckCircle2 className="w-3 h-3" />
+            <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-extrabold mt-1 flex items-center space-x-1">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
               <span>Dapat Ditarik Harian</span>
             </p>
           </div>
         </div>
 
         {/* Wallet 2: Saldo Profit */}
-        <div className="bg-gradient-to-br from-amber-950/20 via-white to-amber-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-5 border-2 border-amber-500/30 shadow-md relative overflow-hidden">
+        <div className="bg-gradient-to-br from-amber-950/20 via-white to-amber-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-5 border-2 border-amber-500/40 shadow-md relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-extrabold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+            <span className="text-[11px] font-black text-amber-800 dark:text-amber-300 uppercase tracking-wider">
               Saldo Profit (35H)
             </span>
             <div className="p-2 rounded-xl bg-amber-500 text-slate-950 shadow-sm">
@@ -260,70 +313,70 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400">
+            <span className="text-xl sm:text-2xl font-black text-amber-700 dark:text-amber-300">
               Rp {(user.saldoProfit ?? 87500).toLocaleString('id-ID')}
             </span>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
-              Lock 35 Hari
+            <p className="text-[11px] text-slate-700 dark:text-slate-300 font-bold mt-1">
+              Terkunci Selama Kontrak
             </p>
           </div>
         </div>
 
         {/* Wallet 3: Saldo Referral */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border-2 border-purple-400/40 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <span className="text-[11px] font-black text-purple-800 dark:text-purple-300 uppercase tracking-wider">
               Saldo Referral
             </span>
-            <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
+            <div className="p-2 rounded-xl bg-purple-500 text-white shadow-sm">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl sm:text-2xl font-extrabold text-purple-600 dark:text-purple-400">
+            <span className="text-xl sm:text-2xl font-black text-purple-700 dark:text-purple-300">
               Rp {(user.totalReferralCommission ?? 32000).toLocaleString('id-ID')}
             </span>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
-              Komisi 3 Tier
+            <p className="text-[11px] text-purple-700 dark:text-purple-300 font-extrabold mt-1">
+              Komisi 3 Level
             </p>
           </div>
         </div>
 
         {/* Wallet 4: Saldo Bonus */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border-2 border-blue-400/40 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <span className="text-[11px] font-black text-blue-800 dark:text-blue-300 uppercase tracking-wider">
               Saldo Bonus
             </span>
-            <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+            <div className="p-2 rounded-xl bg-blue-500 text-white shadow-sm">
               <Gift className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl sm:text-2xl font-extrabold text-blue-600 dark:text-blue-400">
+            <span className="text-xl sm:text-2xl font-black text-blue-700 dark:text-blue-300">
               Rp 10.000
             </span>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+            <p className="text-[11px] text-blue-700 dark:text-blue-300 font-extrabold mt-1">
               Bonus Registrasi
             </p>
           </div>
         </div>
 
         {/* Wallet 5: Saldo Cashback */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 border-2 border-rose-400/40 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+            <span className="text-[11px] font-black text-rose-800 dark:text-rose-300 uppercase tracking-wider">
               Saldo Cashback
             </span>
-            <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400">
+            <div className="p-2 rounded-xl bg-rose-500 text-white shadow-sm">
               <Sparkles className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <span className="text-xl sm:text-2xl font-extrabold text-rose-600 dark:text-rose-400">
+            <span className="text-xl sm:text-2xl font-black text-rose-700 dark:text-rose-300">
               Rp 5.000
             </span>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium mt-1">
+            <p className="text-[11px] text-rose-700 dark:text-rose-300 font-extrabold mt-1">
               Promo Event
             </p>
           </div>
@@ -581,6 +634,15 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         isOpen={isSearchModalOpen}
         onClose={() => setIsSearchModalOpen(false)}
         setActiveTab={setActiveTab}
+      />
+
+      <VipStatusModal
+        isOpen={isVipModalOpen}
+        onClose={() => setIsVipModalOpen(false)}
+        onSelectProductToBuy={() => {
+          setIsVipModalOpen(false);
+          setActiveTab('products');
+        }}
       />
     </div>
   );
