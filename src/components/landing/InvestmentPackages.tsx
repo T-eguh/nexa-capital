@@ -3,7 +3,7 @@ import { Shield, Sparkles, Check, ArrowRight } from 'lucide-react';
 import { formatCurrency } from '../../utils/cn';
 
 interface InvestmentPackagesProps {
-  onOpenAuth: (mode: 'LOGIN' | 'REGISTER' | 'ADMIN_LOGIN') => void;
+  onOpenAuth: (mode: 'LOGIN' | 'REGISTER') => void;
   lang: 'ID' | 'EN';
 }
 

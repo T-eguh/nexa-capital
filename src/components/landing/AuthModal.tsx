@@ -8,7 +8,7 @@ import { NexaCapitalLogo } from '../NexaCapitalLogo';
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialMode?: 'LOGIN' | 'REGISTER' | 'ADMIN_LOGIN';
+  initialMode?: 'LOGIN' | 'REGISTER';
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -16,7 +16,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   initialMode = 'REGISTER',
 }) => {
-  const [mode, setMode] = useState<'LOGIN' | 'REGISTER' | 'ADMIN_LOGIN'>(initialMode);
+  const [mode, setMode] = useState<'LOGIN' | 'REGISTER'>(initialMode);
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
 
   if (!isOpen) return null;
@@ -24,7 +24,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-        <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl max-h-[92vh] overflow-y-auto">
+        <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl max-h-[92vh] overflow-y-auto">
           {/* Close Button */}
           <button
             onClick={onClose}
@@ -61,18 +61,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               >
                 Masuk
               </button>
-              <button
-                onClick={() => setMode('ADMIN_LOGIN')}
-                className={`px-3 py-2 rounded-lg transition-all ${
-                  mode === 'ADMIN_LOGIN'
-                    ? 'bg-amber-500 text-slate-950 font-black'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-                title="Portal Pengelola Root"
-              >
-                <Shield className="w-3.5 h-3.5 inline mr-1" />
-                Admin
-              </button>
             </div>
           </div>
 
@@ -86,15 +74,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
             {mode === 'LOGIN' && (
               <LoginForm
-                onSuccess={onClose}
-                onSwitchToRegister={() => setMode('REGISTER')}
-                onForgotPassword={() => setForgotModalOpen(true)}
-              />
-            )}
-
-            {mode === 'ADMIN_LOGIN' && (
-              <LoginForm
-                isAdmin={true}
                 onSuccess={onClose}
                 onSwitchToRegister={() => setMode('REGISTER')}
                 onForgotPassword={() => setForgotModalOpen(true)}

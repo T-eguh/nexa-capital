@@ -35,6 +35,7 @@ interface HeaderProps {
   setActiveTab: (tab: string) => void;
   openDepositModal: () => void;
   openWithdrawModal: () => void;
+  onOpenProfile?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -42,6 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
   setActiveTab,
   openDepositModal,
   openWithdrawModal,
+  onOpenProfile,
 }) => {
   const { theme } = useTheme();
   const { user, isAdminMode, setIsAdminMode, notifications, logout } = useApp();
@@ -49,35 +51,33 @@ export const Header: React.FC<HeaderProps> = ({
 
   const [showNotifMenu, setShowNotifMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isInternalProfileOpen, setIsInternalProfileOpen] = useState(false);
   const [isSecurityOpen, setIsSecurityOpen] = useState(false);
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isVipModalOpen, setIsVipModalOpen] = useState(false);
 
+  const isProfileOpen = isInternalProfileOpen;
+  const handleOpenProfile = onOpenProfile || (() => setIsInternalProfileOpen(true));
+
   const roles = authUser?.roles || ['USER'];
 
   const navItems = [
-    { id: 'dashboard', label: 'Dashboard' },
-    { id: 'products', label: 'Produk' },
+    { id: 'dashboard', label: 'Beranda' },
+    { id: 'products', label: 'Perdagangan' },
+    { id: 'referral', label: 'Hadiah' },
     { id: 'portfolio', label: 'Portofolio' },
-    { id: 'analytics', label: 'Analytics' },
-    { id: 'reports', label: 'Laporan' },
-    { id: 'announcements', label: 'Pengumuman' },
-    { id: 'ledger', label: 'Ledger' },
-    { id: 'history', label: 'Riwayat' },
-    { id: 'referral', label: 'Referral' },
+    { id: 'ledger', label: 'Mutasi' },
   ];
-
 
   return (
     <>
       <header className="sticky top-0 z-40 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm transition-colors duration-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-16 gap-2">
             {/* Brand Logo & Name */}
-            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
+            <div className="flex items-center space-x-2 shrink-0 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
               <NexaCapitalLogo size="md" showText={true} />
-              <span className="hidden sm:inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+              <span className="hidden xl:inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 whitespace-nowrap">
                 Trading & Investasi
               </span>
             </div>
@@ -93,10 +93,10 @@ export const Header: React.FC<HeaderProps> = ({
                       setIsAdminMode(false);
                       setActiveTab(item.id);
                     }}
-                    className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                       isActive
-                        ? 'bg-slate-100 dark:bg-slate-800 text-blue-600 dark:text-blue-400 font-semibold'
-                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                        ? 'bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400 font-bold'
+                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60'
                     }`}
                   >
                     {item.label}
@@ -106,46 +106,12 @@ export const Header: React.FC<HeaderProps> = ({
             </nav>
 
             {/* Right Section: Balance, User Profile, Security Center, Notifications */}
-            <div className="flex items-center space-x-2.5">
-              {/* Balance Badge & VIP level */}
-              <div className="hidden sm:flex items-center space-x-2">
-                <button
-                  onClick={() => setIsVipModalOpen(true)}
-                  className="px-2.5 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs shadow-sm flex items-center space-x-1 transition-transform hover:scale-105 active:scale-95 cursor-pointer"
-                  title="Klik untuk melihat Status VIP & Keuntungan"
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>{user.vipLevel || 'VIP 0'}</span>
-                </button>
-
-                {/* Role Badge */}
-                {roles.includes('SUPER_ADMIN') && (
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-purple-500 text-white uppercase tracking-wider">
-                    Super Admin
-                  </span>
-                )}
-                {roles.includes('ADMIN') && !roles.includes('SUPER_ADMIN') && (
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-500 text-slate-950 uppercase tracking-wider">
-                    Admin
-                  </span>
-                )}
-
-                <div className="flex flex-col items-end px-3 py-1 bg-slate-50 dark:bg-slate-800/80 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                    Saldo Penarikan
-                  </span>
-                  <span className="text-sm font-black text-slate-900 dark:text-emerald-400 flex items-center space-x-1">
-                    <Wallet className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>Rp {(user.saldoPenarikan ?? user.balance ?? 0).toLocaleString('id-ID')}</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Quick Action Buttons */}
-              <div className="hidden sm:flex items-center space-x-1.5">
+            <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+              {/* Quick Deposit & Tarik Buttons */}
+              <div className="flex items-center space-x-1 shrink-0">
                 <button
                   onClick={openDepositModal}
-                  className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-white shadow-sm transition-all hover:opacity-90 active:scale-95"
+                  className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm transition-all hover:opacity-90 active:scale-95 whitespace-nowrap shrink-0"
                   style={{ backgroundColor: theme.primaryColor }}
                 >
                   <ArrowDownLeft className="w-3.5 h-3.5" />
@@ -153,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
                 <button
                   onClick={openWithdrawModal}
-                  className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all active:scale-95"
+                  className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all active:scale-95 whitespace-nowrap shrink-0"
                 >
                   <ArrowUpRight className="w-3.5 h-3.5" />
                   <span>Tarik</span>
@@ -162,12 +128,22 @@ export const Header: React.FC<HeaderProps> = ({
 
               {/* User Profile Trigger Button */}
               <button
-                onClick={() => setIsProfileOpen(true)}
-                className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-sky-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center space-x-1.5"
+                onClick={handleOpenProfile}
+                className="px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center space-x-1 text-xs font-bold shrink-0 whitespace-nowrap"
                 title="Pengaturan Profil Akun"
               >
-                <UserIcon className="w-4 h-4 text-sky-400" />
-                <span className="hidden md:inline text-xs font-bold">{user.name.split(' ')[0]}</span>
+                <UserIcon className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                <span className="max-w-[70px] sm:max-w-[100px] truncate">{user.name.split(' ')[0]}</span>
+              </button>
+
+              {/* VIP Badge */}
+              <button
+                onClick={() => setIsVipModalOpen(true)}
+                className="hidden xl:flex px-2 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-[11px] shadow-sm items-center space-x-1 transition-transform hover:scale-105 active:scale-95 shrink-0 whitespace-nowrap"
+                title="Klik untuk melihat Status VIP & Keuntungan"
+              >
+                <ShieldCheck className="w-3 h-3" />
+                <span>{user.vipLevel || 'VIP 0'}</span>
               </button>
 
               {/* Language Selector */}
@@ -176,29 +152,29 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Social Share Trigger */}
               <button
                 onClick={() => setIsShareOpen(true)}
-                className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-teal-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-teal-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shrink-0"
                 title="Bagikan Platform"
               >
-                <Share2 className="w-4 h-4 text-teal-400" />
+                <Share2 className="w-3.5 h-3.5 text-teal-400" />
               </button>
 
               {/* Security Center Trigger Button */}
               <button
                 onClick={() => setIsSecurityOpen(true)}
-                className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-emerald-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-emerald-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shrink-0"
                 title="Pusat Keamanan & Perangkat"
               >
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               </button>
 
               {/* Notifications Menu */}
-              <div className="relative">
+              <div className="relative shrink-0">
                 <button
                   onClick={() => setShowNotifMenu(!showNotifMenu)}
-                  className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all relative"
+                  className="p-1.5 sm:p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all relative shrink-0"
                   title="Notifikasi"
                 >
-                  <Bell className="w-4 h-4" />
+                  <Bell className="w-3.5 h-3.5" />
                   {notifications.length > 0 && (
                     <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900"></span>
                   )}
@@ -238,17 +214,17 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Logout Button */}
               <button
                 onClick={logout}
-                className="p-2 rounded-lg text-rose-500 hover:text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 transition-all flex items-center space-x-1 text-xs font-bold"
+                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-rose-500 hover:text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 transition-all flex items-center space-x-1 text-xs font-bold shrink-0 whitespace-nowrap"
                 title="Keluar / Logout Akun"
               >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Keluar</span>
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Keluar</span>
               </button>
 
               {/* Mobile Hamburger Toggle */}
               <button
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className="lg:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800"
+                className="lg:hidden p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 shrink-0"
               >
                 {showMobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -315,7 +291,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* User Profile Modal */}
       <UserProfileModal
         isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
+        onClose={() => setIsInternalProfileOpen(false)}
       />
 
       {/* Security Center Modal */}

@@ -24,6 +24,7 @@ import {
   CreditCard,
   User as UserIcon,
   PieChart,
+  Camera,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -140,10 +141,17 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           <div className="flex flex-col sm:flex-row gap-2.5">
             <button
               onClick={openDepositModal}
+              className="px-4 py-2.5 bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 hover:from-emerald-300 hover:to-teal-300 rounded-xl font-black text-xs shadow-lg shadow-emerald-500/20 transition-transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-1.5"
+            >
+              <Zap className="w-4 h-4 fill-current text-slate-950" />
+              <span>Tes Payment Gateway Otomatis</span>
+            </button>
+            <button
+              onClick={openDepositModal}
               className="px-4 py-2.5 bg-white text-slate-900 hover:bg-slate-100 rounded-xl font-bold text-xs shadow-md transition-transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-1.5"
             >
               <ArrowDownLeft className="w-4 h-4 text-blue-600" />
-              <span>Deposit Saldo</span>
+              <span>Deposit Manual</span>
             </button>
             <button
               onClick={openWithdrawModal}
@@ -151,13 +159,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             >
               <ArrowUpRight className="w-4 h-4" />
               <span>Tarik Saldo</span>
-            </button>
-            <button
-              onClick={() => setIsSearchModalOpen(true)}
-              className="px-4 py-2.5 bg-white/15 hover:bg-white/25 text-white rounded-xl font-bold text-xs shadow-md backdrop-blur-md transition-all flex items-center justify-center space-x-1.5"
-            >
-              <Search className="w-4 h-4" />
-              <span>Cari Sistem</span>
             </button>
           </div>
         </div>
@@ -235,6 +236,14 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           >
             <CreditCard className="w-5 h-5 text-teal-600 dark:text-teal-400" />
             <span className="text-[11px]">Ledger</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('testimonials')}
+            className="p-3 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-emerald-500/30"
+          >
+            <Camera className="w-5 h-5 text-emerald-400" />
+            <span className="text-[11px]">Galeri Cair</span>
           </button>
 
           <a
@@ -553,12 +562,12 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {activeInvs.map((inv) => {
+            {activeInvs.map((inv, idx) => {
               const progressPct = Math.round((inv.daysElapsed / inv.totalDays) * 100);
               const is35H = inv.isLockable35H || inv.totalDays >= 35;
               return (
                 <div
-                  key={inv.id}
+                  key={`${inv.id}-${idx}`}
                   className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between space-y-3"
                 >
                   <div className="flex items-start justify-between">

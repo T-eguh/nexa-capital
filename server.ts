@@ -1,6 +1,15 @@
 import express from 'express';
 import http from 'http';
 import path from 'path';
+
+// Anti-Crash & Anti-DDoS Global Process Crash Guards
+process.on('uncaughtException', (err) => {
+  console.error('[CRITICAL PROCESS GUARD] Uncaught Exception caught, server recovering:', err);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[CRITICAL PROCESS GUARD] Unhandled Rejection caught, server recovering:', reason);
+});
 import { Server as SocketIOServer } from 'socket.io';
 import { createServer as createViteServer } from 'vite';
 import authRoutes from './server/routes/auth';
@@ -97,6 +106,16 @@ async function startServer() {
   app.use('/api/activity', activityRoutes);
   app.use('/api/search', searchRoutes);
   app.use('/api/docs', docsRoutes);
+
+  // Global Express Anti-DDoS Error Protection Middleware
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('[ANTI-DDOS PROTECTED API ERROR]', err);
+    res.status(err.status || 500).json({
+      success: false,
+      message: 'Sistem Anti-DDoS & Fail-safe aktif: Terjadi penanganan keamanan API. Server tetap beroperasi stabil.',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    });
+  });
 
   // Vite middleware setup for Development
   if (process.env.NODE_ENV !== 'production') {

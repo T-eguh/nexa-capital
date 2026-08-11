@@ -172,9 +172,9 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
                 Riwayat Transaksi ({matchedTransactions.length})
               </span>
               <div className="space-y-1">
-                {matchedTransactions.map((tx) => (
+                {matchedTransactions.map((tx, idx) => (
                   <div
-                    key={tx.id}
+                    key={`${tx.id}-${idx}`}
                     onClick={() => {
                       setActiveTab('history');
                       onClose();

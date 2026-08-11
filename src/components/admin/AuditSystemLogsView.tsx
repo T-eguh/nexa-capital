@@ -73,8 +73,8 @@ export const AuditSystemLogsView: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/80">
-                {auditLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-800/40 transition-colors">
+                {auditLogs.map((log, idx) => (
+                  <tr key={`${log.id}-${idx}`} className="hover:bg-slate-800/40 transition-colors">
                     <td className="p-4 text-slate-400">{new Date(log.createdAt).toLocaleString('id-ID')}</td>
                     <td className="p-4 font-bold text-white">{log.userEmail}</td>
                     <td className="p-4">
@@ -102,8 +102,8 @@ export const AuditSystemLogsView: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            {systemLogs.map((sys) => (
-              <div key={sys.id} className="flex items-start space-x-3 text-[11px]">
+            {systemLogs.map((sys, idx) => (
+              <div key={`${sys.id}-${idx}`} className="flex items-start space-x-3 text-[11px]">
                 <span className="text-slate-500 shrink-0">[{new Date(sys.createdAt).toLocaleTimeString()}]</span>
                 <span className="text-emerald-400 font-bold uppercase shrink-0">[{sys.level}]</span>
                 <span className="text-amber-400 font-bold shrink-0">[{sys.source}]</span>

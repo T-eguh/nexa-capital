@@ -24,14 +24,32 @@ export const securityHeaders = (req: Request, res: Response, next: NextFunction)
   next();
 };
 
-// Simple In-memory Rate Limiter
-const rateLimitMap = new Map<string, { count: number; firstRequest: number }>();
+// Anti-DDoS & Rate Limiting Map
+const rateLimitMap = new Map<string, { count: number; firstRequest: number; blockedUntil?: number }>();
 
-export const rateLimiter = (maxRequests = 100, windowMs = 15 * 60 * 1000) => {
+// Periodic cleanup every 5 minutes to prevent memory leaks from attack traffic
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of rateLimitMap.entries()) {
+    if (now - record.firstRequest > 15 * 60 * 1000 && (!record.blockedUntil || record.blockedUntil < now)) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000);
+
+export const rateLimiter = (maxRequests = 300, windowMs = 1 * 60 * 1000) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const ip = req.ip || req.socket.remoteAddress || '127.0.0.1';
+    const ip = (req.headers['x-forwarded-for'] as string) || req.ip || req.socket.remoteAddress || '127.0.0.1';
     const now = Date.now();
     const record = rateLimitMap.get(ip);
+
+    if (record?.blockedUntil && now < record.blockedUntil) {
+      return res.status(429).json({
+        success: false,
+        message: 'Akses diblokir sementara oleh Anti-DDoS Guard karena lalu lintas berlebihan. Coba lagi dalam 1 menit.',
+        retryAfterSeconds: Math.ceil((record.blockedUntil - now) / 1000),
+      });
+    }
 
     if (!record) {
       rateLimitMap.set(ip, { count: 1, firstRequest: now });
@@ -44,9 +62,12 @@ export const rateLimiter = (maxRequests = 100, windowMs = 15 * 60 * 1000) => {
     }
 
     if (record.count >= maxRequests) {
+      // Temporary block for 1 minute when exceeding limit
+      record.blockedUntil = now + 60 * 1000;
       return res.status(429).json({
         success: false,
-        message: 'Batas permintaan terlampaui. Harap tunggu beberapa saat sebelum mencoba kembali.',
+        message: 'Batas frekuensi permintaan terlampaui. Sistem Anti-DDoS mengamankan server dari beban berlebih.',
+        retryAfterSeconds: 60,
       });
     }
 

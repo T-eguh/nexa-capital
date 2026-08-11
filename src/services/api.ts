@@ -115,7 +115,11 @@ apiClient.interceptors.response.use(
     }
 
     const errorMessage = error.response?.data?.message || error.message || 'Terjadi kesalahan sistem.';
-    console.error('API Error:', errorMessage);
+    if (error.response?.status === 401) {
+      console.warn('API Auth Note:', errorMessage);
+    } else {
+      console.error('API Error:', errorMessage);
+    }
     return Promise.reject(new Error(errorMessage));
   }
 );

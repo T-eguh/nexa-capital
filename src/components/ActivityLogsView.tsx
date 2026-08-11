@@ -108,8 +108,8 @@ export const ActivityLogsView: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {filteredLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                {filteredLogs.map((log, idx) => (
+                  <tr key={`${log.id}-${idx}`} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="px-6 py-4 font-mono text-slate-500 whitespace-nowrap">
                       {new Date(log.createdAt).toLocaleString('id-ID')}
                     </td>

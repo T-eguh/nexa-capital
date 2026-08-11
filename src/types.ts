@@ -115,6 +115,7 @@ export interface Testimonial {
   id: string;
   userId: string;
   userName: string;
+  userPhone?: string; // e.g. "+62 *** 6408"
   userAvatar?: string;
   withdrawalAmount: number;
   rating: number; // 1-5
@@ -123,6 +124,8 @@ export interface Testimonial {
   rewardAmount?: number; // Set by admin (Rp 2.000 - Rp 5.000)
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
+  timeStr?: string; // e.g. "09.22"
+  typeCategory?: 'Penarikan' | 'Setoran' | 'Modal';
 }
 
 export interface ThemePreset {

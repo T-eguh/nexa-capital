@@ -21,9 +21,9 @@ import { AuthModal } from './landing/AuthModal';
 export const AuthScreen: React.FC = () => {
   const [lang, setLang] = useState<'ID' | 'EN'>('ID');
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'LOGIN' | 'REGISTER' | 'ADMIN_LOGIN'>('REGISTER');
+  const [authMode, setAuthMode] = useState<'LOGIN' | 'REGISTER'>('REGISTER');
 
-  const handleOpenAuth = (mode: 'LOGIN' | 'REGISTER' | 'ADMIN_LOGIN') => {
+  const handleOpenAuth = (mode: 'LOGIN' | 'REGISTER') => {
     setAuthMode(mode);
     setAuthModalOpen(true);
   };

@@ -213,8 +213,8 @@ export const FinancialLedgerView: React.FC = () => {
                   </td>
                 </tr>
               ) : (
-                filteredEntries.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
+                filteredEntries.map((item, index) => (
+                  <tr key={`${item.id}-${index}`} className="hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-colors">
                     <td className="py-3.5 px-4">
                       <p className="font-mono font-bold text-slate-900 dark:text-white">{item.referenceNo}</p>
                       <span className="text-[10px] text-slate-400">

@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowRight, Sparkles, ShieldCheck, UserPlus, LogIn } from 'lucide-react';
 
 interface CtaSectionProps {
-  onOpenAuth: (mode: 'LOGIN' | 'REGISTER' | 'ADMIN_LOGIN') => void;
+  onOpenAuth: (mode: 'LOGIN' | 'REGISTER') => void;
   lang: 'ID' | 'EN';
 }
 

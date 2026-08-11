@@ -14,7 +14,7 @@ import { NexaCapitalLogo } from '../NexaCapitalLogo';
 import { useTheme } from '../../context/ThemeContext';
 
 interface NavbarProps {
-  onOpenAuth: (mode: 'LOGIN' | 'REGISTER' | 'ADMIN_LOGIN') => void;
+  onOpenAuth: (mode: 'LOGIN' | 'REGISTER') => void;
   lang: 'ID' | 'EN';
   setLang: (lang: 'ID' | 'EN') => void;
 }
@@ -38,16 +38,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, lang, setLang }) => 
 
   const navLinks = [
     { name: lang === 'ID' ? 'Beranda' : 'Home', href: '#hero' },
-    { name: lang === 'ID' ? 'Pasar Live' : 'Live Market', href: '#market' },
+    { name: lang === 'ID' ? 'Paket VIP' : 'Packages', href: '#packages' },
     { name: lang === 'ID' ? 'Kalkulator' : 'Calculator', href: '#calculator' },
     { name: lang === 'ID' ? 'Keunggulan' : 'Features', href: '#features' },
-    { name: lang === 'ID' ? 'Cara Kerja' : 'How It Works', href: '#how-it-works' },
-    { name: lang === 'ID' ? 'Paket VIP' : 'Packages', href: '#packages' },
-    { name: lang === 'ID' ? 'Portofolio' : 'Preview', href: '#preview' },
-    { name: lang === 'ID' ? 'Keamanan' : 'Security', href: '#security' },
-    { name: lang === 'ID' ? 'Testimoni' : 'Testimonials', href: '#testimonials' },
     { name: lang === 'ID' ? 'FAQ' : 'FAQ', href: '#faq' },
-    { name: lang === 'ID' ? 'Kontak' : 'Contact', href: '#contact' },
   ];
 
   return (
@@ -65,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth, lang, setLang }) => 
         </a>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden xl:flex items-center space-x-5 text-xs font-medium text-slate-300">
+        <nav className="hidden lg:flex items-center space-x-7 text-xs font-semibold text-slate-300">
           {navLinks.map((link) => (
             <a
               key={link.href}

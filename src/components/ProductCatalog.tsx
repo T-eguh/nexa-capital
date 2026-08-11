@@ -12,7 +12,6 @@ import {
   Clock,
   ArrowRight,
   Info,
-  CheckCircle2,
 } from 'lucide-react';
 import { InvestmentProduct } from '../types';
 import { useApp } from '../context/AppContext';
@@ -226,17 +225,6 @@ export const ProductCatalog: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Withdrawal destination badge */}
-                  <div className="absolute top-3 right-3">
-                    <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-lg shadow-lg backdrop-blur-md border ${
-                      isShortTerm
-                        ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/40'
-                        : 'bg-blue-950/80 text-blue-400 border-blue-500/40'
-                    }`}>
-                      {isShortTerm ? 'Cair ke Saldo Penarikan' : 'Cair ke Saldo Profit'}
-                    </span>
-                  </div>
-
                   {/* Product Title overlay */}
                   <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between">
                     <div>
@@ -281,16 +269,6 @@ export const ProductCatalog: React.FC = () => {
                       </span>
                     </div>
                   </div>
-
-                  {/* Additional info badge */}
-                  {isShortTerm && (
-                    <div className="flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2.5 text-[11px] text-emerald-300">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <span>
-                        Selesai {p.durationDays} hari: Modal & Profit langsung masuk ke <strong className="text-white">Saldo Penarikan</strong> dan siap ditarik.
-                      </span>
-                    </div>
-                  )}
 
                   {/* Actions: Calculator & Buy Button */}
                   <div className="flex items-center gap-2 pt-1">

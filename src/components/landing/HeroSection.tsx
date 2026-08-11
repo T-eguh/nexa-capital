@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 interface HeroSectionProps {
-  onOpenAuth: (mode: 'LOGIN' | 'REGISTER' | 'ADMIN_LOGIN') => void;
+  onOpenAuth: (mode: 'LOGIN' | 'REGISTER') => void;
   lang: 'ID' | 'EN';
 }
 

@@ -3,7 +3,7 @@ import { Calculator, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
 import { formatCurrency } from '../../utils/cn';
 
 interface InvestmentCalculatorProps {
-  onOpenAuth: (mode: 'LOGIN' | 'REGISTER' | 'ADMIN_LOGIN') => void;
+  onOpenAuth: (mode: 'LOGIN' | 'REGISTER') => void;
   lang: 'ID' | 'EN';
 }
 

@@ -77,6 +77,25 @@ interface AppContextType {
   triggerConfetti: () => void;
 }
 
+let globalTxCounter = 0;
+const generateUniqueTxId = (prefix = 'tx'): string => {
+  globalTxCounter += 1;
+  return `${prefix}-${Date.now()}-${globalTxCounter}-${Math.random().toString(36).substring(2, 7)}`;
+};
+
+const sanitizeTransactions = (list: Transaction[]): Transaction[] => {
+  if (!Array.isArray(list)) return [];
+  const seenIds = new Set<string>();
+  return list.map((tx, idx) => {
+    let id = tx.id;
+    if (!id || seenIds.has(id)) {
+      id = `${id || 'tx'}-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 7)}`;
+    }
+    seenIds.add(id);
+    return { ...tx, id };
+  });
+};
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -120,10 +139,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : INITIAL_USER_INVESTMENTS;
   });
 
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
+  const [transactions, setTransactionsRaw] = useState<Transaction[]>(() => {
     const saved = localStorage.getItem('nexainvest_transactions');
-    return saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
+    const raw = saved ? JSON.parse(saved) : INITIAL_TRANSACTIONS;
+    return sanitizeTransactions(raw);
   });
+
+  const setTransactions = (action: React.SetStateAction<Transaction[]>) => {
+    setTransactionsRaw((prev) => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      return sanitizeTransactions(next);
+    });
+  };
 
   const [downlines, setDownlines] = useState<DownlineUser[]>(() => {
     const saved = localStorage.getItem('nexainvest_downlines');
@@ -366,7 +393,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // Transaction log for Purchase
     const newTx: Transaction = {
-      id: `tx-${Date.now()}`,
+      id: generateUniqueTxId('tx-buy'),
       userId: user.id,
       type: 'PRODUCT_PURCHASE',
       amount: product.price,
@@ -386,7 +413,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const commissionLvl3 = Math.round(product.price * 0.01);
 
     const refTxLvl1: Transaction = {
-      id: `tx-ref-l1-${Date.now()}`,
+      id: generateUniqueTxId('tx-ref-l1'),
       userId: user.id,
       type: 'REFERRAL_COMMISSION',
       amount: commissionLvl1,
@@ -397,7 +424,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     const refTxLvl2: Transaction = {
-      id: `tx-ref-l2-${Date.now() + 1}`,
+      id: generateUniqueTxId('tx-ref-l2'),
       userId: user.id,
       type: 'REFERRAL_COMMISSION',
       amount: commissionLvl2,
@@ -408,7 +435,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     const refTxLvl3: Transaction = {
-      id: `tx-ref-l3-${Date.now() + 2}`,
+      id: generateUniqueTxId('tx-ref-l3'),
       userId: user.id,
       type: 'REFERRAL_COMMISSION',
       amount: commissionLvl3,
@@ -463,7 +490,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }));
 
         const maturityTx: Transaction = {
-          id: `tx-mat-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          id: generateUniqueTxId('tx-mat'),
           userId: user.id,
           type: 'MATURITY_PAYOUT',
           amount: totalPayout,
@@ -483,7 +510,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }));
 
         const profitTx: Transaction = {
-          id: `tx-p-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          id: generateUniqueTxId('tx-p'),
           userId: user.id,
           type: 'DAILY_PROFIT',
           amount: dailyProfitAmount,
@@ -504,7 +531,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }));
 
       const profitTx: Transaction = {
-        id: `tx-p-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        id: generateUniqueTxId('tx-p'),
         userId: user.id,
         type: 'DAILY_PROFIT',
         amount: dailyProfitAmount,
@@ -543,7 +570,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const newTx: Transaction = {
-      id: `tx-dep-${Date.now()}`,
+      id: generateUniqueTxId('tx-dep'),
       userId: user.id,
       type: 'DEPOSIT',
       amount,
@@ -599,7 +626,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
 
     const newTx: Transaction = {
-      id: `tx-wd-${Date.now()}`,
+      id: generateUniqueTxId('tx-wd'),
       userId: user.id,
       type: 'WITHDRAWAL',
       amount,
@@ -729,7 +756,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
 
     const rewardTx: Transaction = {
-      id: `tx-reward-${Date.now()}`,
+      id: generateUniqueTxId('tx-reward'),
       userId: user.id,
       type: 'TESTIMONIAL_REWARD',
       amount: reward,
@@ -778,7 +805,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       balance: prev.saldoPenarikan + amount,
     }));
     const tx: Transaction = {
-      id: `tx-topup-${Date.now()}`,
+      id: generateUniqueTxId('tx-topup'),
       userId: user.id,
       type: 'DEPOSIT',
       amount,

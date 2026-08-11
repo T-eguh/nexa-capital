@@ -216,7 +216,7 @@ router.post('/login', async (req: Request, res: Response) => {
       lastActiveAt: new Date().toISOString(),
     });
 
-    // Generate JWT Access Token (15 mins or 1h)
+    // Generate JWT Access Token (30 days for continuous session)
     const token = jwt.sign(
       {
         userId: user.id,
@@ -226,12 +226,12 @@ router.post('/login', async (req: Request, res: Response) => {
         sessionId: session.id,
       },
       JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '30d' }
     );
 
-    // Generate Refresh Token (7 days)
+    // Generate Refresh Token (30 days)
     const refreshToken = jwt.sign({ userId: user.id, sessionId: session.id }, JWT_REFRESH_SECRET, {
-      expiresIn: '7d',
+      expiresIn: '30d',
     });
 
     db.createRefreshToken(user.id, refreshToken, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString());
@@ -318,11 +318,11 @@ router.post('/refresh', (req: Request, res: Response) => {
         sessionId: decoded.sessionId,
       },
       JWT_SECRET,
-      { expiresIn: '1h' }
+      { expiresIn: '30d' }
     );
 
     const newRefreshToken = jwt.sign({ userId: user.id, sessionId: decoded.sessionId }, JWT_REFRESH_SECRET, {
-      expiresIn: '7d',
+      expiresIn: '30d',
     });
 
     db.createRefreshToken(user.id, newRefreshToken, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString());
