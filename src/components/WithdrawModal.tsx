@@ -24,11 +24,10 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose })
   const currentAvailableBalance = user.saldoPenarikan ?? user.balance;
 
   const [amount, setAmount] = useState<string>('50000');
-  const [bankName, setBankName] = useState<string>(
-    user.bankAccount?.bankName || 'Bank Central Asia (BCA)'
-  );
+  const [methodType, setMethodType] = useState<'EWALLET' | 'BANK'>('EWALLET');
+  const [bankName, setBankName] = useState<string>('E-Wallet DANA');
   const [accountNumber, setAccountNumber] = useState<string>(
-    user.bankAccount?.accountNumber || '8820194821'
+    user.bankAccount?.accountNumber || ''
   );
   const [accountHolder, setAccountHolder] = useState<string>(
     user.bankAccount?.accountHolder || user.name.toUpperCase()
@@ -36,6 +35,11 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose })
   const [errorMsg, setErrorMsg] = useState<string>('');
 
   if (!isOpen) return null;
+
+  // Check 09:00 - 17:00 WIB operating hours
+  const now = new Date();
+  const currentWibHour = (now.getUTCHours() + 7) % 24;
+  const isOperatingHours = currentWibHour >= 9 && currentWibHour < 17;
 
   const todayStr = new Date().toISOString().split('T')[0];
   const hasWithdrawnToday =
@@ -46,19 +50,33 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose })
 
   const numAmount = Number(amount) || 0;
 
-  const bankOptions = [
-    'Bank Central Asia (BCA)',
-    'Bank Mandiri',
-    'Bank Rakyat Indonesia (BRI)',
-    'Bank Negara Indonesia (BNI)',
+  const ewalletOptions = [
     'E-Wallet DANA',
     'E-Wallet GoPay',
     'E-Wallet OVO',
     'E-Wallet ShopeePay',
   ];
 
+  const bankMaintenanceOptions = [
+    'Bank Central Asia (BCA) - MAINTENANCE',
+    'Bank Mandiri - MAINTENANCE',
+    'Bank Rakyat Indonesia (BRI) - MAINTENANCE',
+    'Bank Negara Indonesia (BNI) - MAINTENANCE',
+  ];
+
   const handleConfirmWithdraw = () => {
     setErrorMsg('');
+
+    if (methodType === 'BANK') {
+      setErrorMsg('Penarikan via Rekening Bank sedang MAINTENANCE SEMENTARA. Silakan gunakan E-Wallet (DANA, GoPay, OVO, ShopeePay).');
+      return;
+    }
+
+    if (!isOperatingHours) {
+      setErrorMsg('Penarikan saldo hanya dapat diproses pada jam operasional 09:00 - 17:00 WIB.');
+      return;
+    }
+
     if (hasWithdrawnToday) {
       setErrorMsg('penarikan cuman bisa dilakukan sekali dalam sehari, coba lagi di keesokan harinya');
       return;
@@ -76,7 +94,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose })
       return;
     }
     if (!accountNumber || !accountHolder) {
-      setErrorMsg('Harap lengkapi nomor rekening dan nama pemilik rekening.');
+      setErrorMsg('Harap lengkapi nomor e-wallet dan nama akun pemegang e-wallet.');
       return;
     }
 
@@ -103,12 +121,19 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose })
               <ArrowUpRight className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Penarikan Saldo (Withdrawal)
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>Penarikan Saldo</span>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-extrabold border ${
+                  isOperatingHours
+                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+                    : 'bg-rose-500/10 text-rose-500 border-rose-500/30'
+                }`}>
+                  {isOperatingHours ? 'BUKA (09:00 - 17:00 WIB)' : 'TUTUP (Buka 09:00 - 17:00)'}
+                </span>
               </h3>
-              <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold flex items-center space-x-1">
-                <Clock className="w-3 h-3" />
-                <span>Batas Penarikan: 1x dalam sehari (Min Rp 50.000 - Max Rp 10.000.000)</span>
+              <p className="text-[11px] text-slate-400 font-semibold flex items-center space-x-1 mt-0.5">
+                <Clock className="w-3 h-3 text-amber-500" />
+                <span>Jam Operasional: 09:00 - 17:00 WIB • Batas: 1x / hari</span>
               </p>
             </div>
           </div>
@@ -116,6 +141,19 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose })
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Operational Hours Banner */}
+        {!isOperatingHours && (
+          <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-400 flex items-start space-x-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+            <div>
+              <p className="font-bold text-rose-300">Layanan Penarikan Tutup:</p>
+              <p className="text-[11px] text-slate-300">
+                Penarikan saldo hanya dapat diproses pada jam operasional <strong>09:00 sampai 17:00 WIB</strong>. Silakan ajukan penarikan kembali saat jam buka operasional.
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Current Balance Notice */}
         <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/60 rounded-xl border border-emerald-200 dark:border-emerald-900 flex justify-between items-center text-xs">
@@ -139,51 +177,118 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({ isOpen, onClose })
           <span className="text-[10px] text-slate-400 block">Min Rp 50.000 • Max Rp 10.000.000</span>
         </div>
 
-        {/* Destination Bank / E-Wallet Form */}
-        <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700">
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              Pilih Bank / E-Wallet Tujuan
-            </label>
-            <select
-              value={bankName}
-              onChange={(e) => setBankName(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+        {/* Method Type Selector: E-Wallet vs Bank */}
+        <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+          <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            Pilih Metode Penarikan
+          </label>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setMethodType('EWALLET');
+                setBankName('E-Wallet DANA');
+              }}
+              className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
+                methodType === 'EWALLET'
+                  ? 'border-amber-500 bg-amber-500/10 text-amber-400 font-bold'
+                  : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-400'
+              }`}
             >
-              {bankOptions.map((b) => (
-                <option key={b} value={b}>
-                  {b}
-                </option>
-              ))}
-            </select>
-          </div>
+              <div className="flex items-center space-x-2">
+                <Wallet className="w-4 h-4 text-amber-400" />
+                <span className="text-xs">E-Wallet</span>
+              </div>
+              <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded font-extrabold">AKTIF</span>
+            </button>
 
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              Nomor Rekening / E-Wallet
-            </label>
-            <input
-              type="text"
-              placeholder="Contoh: 8820194821"
-              value={accountNumber}
-              onChange={(e) => setAccountNumber(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              Nama Pemilik Rekening
-            </label>
-            <input
-              type="text"
-              placeholder="Contoh: AHMAD RIZKY"
-              value={accountHolder}
-              onChange={(e) => setAccountHolder(e.target.value)}
-              className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 uppercase"
-            />
+            <button
+              type="button"
+              onClick={() => setMethodType('BANK')}
+              className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
+                methodType === 'BANK'
+                  ? 'border-rose-500 bg-rose-500/10 text-rose-400 font-bold'
+                  : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-400'
+              }`}
+            >
+              <div className="flex items-center space-x-2">
+                <Building2 className="w-4 h-4 text-rose-400" />
+                <span className="text-xs">Rekening Bank</span>
+              </div>
+              <span className="text-[9px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded font-extrabold">MAINTENANCE</span>
+            </button>
           </div>
         </div>
+
+        {/* Destination Details Form */}
+        {methodType === 'EWALLET' ? (
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Pilih E-Wallet Tujuan
+              </label>
+              <select
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              >
+                {ewalletOptions.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Nomor Handphone / Akun E-Wallet
+              </label>
+              <input
+                type="text"
+                placeholder="Contoh: 081234567890"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Nama Akun Pemegang E-Wallet
+              </label>
+              <input
+                type="text"
+                placeholder="Contoh: AHMAD RIZKY"
+                value={accountHolder}
+                onChange={(e) => setAccountHolder(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 uppercase"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="p-4 bg-slate-900 rounded-2xl border border-rose-500/30 text-xs text-center space-y-2">
+            <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h4 className="font-bold text-white text-sm">Penarikan via Rekening Bank Maintenance</h4>
+            <p className="text-slate-300 text-[11px] leading-relaxed">
+              Penarikan melalui rekening bank saat ini sedang <strong>MAINTENANCE SEMENTARA</strong>.
+              Penarikan saat ini <strong>HANYA BISA MELALUI E-WALLET</strong> (DANA, GoPay, OVO, ShopeePay).
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setMethodType('EWALLET');
+                setBankName('E-Wallet DANA');
+              }}
+              className="px-4 py-2 bg-amber-400 text-slate-950 font-black text-xs rounded-xl hover:bg-amber-300 transition-all"
+            >
+              Gunakan Penarikan E-Wallet
+            </button>
+          </div>
+        )}
 
         <div className="p-3 bg-slate-900 text-white rounded-xl text-xs space-y-1 border border-slate-800">
           <div className="flex items-center space-x-1.5 text-amber-400 font-bold">

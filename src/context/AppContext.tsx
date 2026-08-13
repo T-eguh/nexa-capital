@@ -404,7 +404,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setTransactions((prev) => [newTx, ...prev]);
 
-    // 3-LEVEL REFERRAL COMMISSION SYSTEM (Requires Admin Approval)
+    // 3-LEVEL REFERRAL COMMISSION SYSTEM (Directly Auto-credited to Saldo Penarikan)
     // Level 1: 32% (50k * 32% = 16k)
     // Level 2: 2% (50k * 2% = 1k)
     // Level 3: 1% (50k * 1% = 500)
@@ -417,8 +417,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       userId: user.id,
       type: 'REFERRAL_COMMISSION',
       amount: commissionLvl1,
-      status: 'PENDING',
-      note: `Komisi Referral Lvl 1 (32%) dari pembelian ${product.name}`,
+      status: 'APPROVED',
+      note: `Komisi Referral Lvl 1 (32%) dari pembelian ${product.name} (Langsung Masuk Saldo Penarikan)`,
       date: new Date().toISOString(),
       referralLevel: 1,
     };
@@ -428,7 +428,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       userId: user.id,
       type: 'REFERRAL_COMMISSION',
       amount: commissionLvl2,
-      status: 'PENDING',
+      status: 'APPROVED',
       note: `Komisi Referral Lvl 2 (2%) dari pembelian ${product.name}`,
       date: new Date().toISOString(),
       referralLevel: 2,
@@ -439,13 +439,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       userId: user.id,
       type: 'REFERRAL_COMMISSION',
       amount: commissionLvl3,
-      status: 'PENDING',
+      status: 'APPROVED',
       note: `Komisi Referral Lvl 3 (1%) dari pembelian ${product.name}`,
       date: new Date().toISOString(),
       referralLevel: 3,
     };
 
     setTransactions((prev) => [refTxLvl1, refTxLvl2, refTxLvl3, ...prev]);
+
+    // Credit Level 1 referral commission directly to user saldoPenarikan
+    setUser((prev) => ({
+      ...prev,
+      saldoPenarikan: prev.saldoPenarikan + commissionLvl1,
+      balance: prev.saldoPenarikan + commissionLvl1,
+      totalReferralCommission: prev.totalReferralCommission + commissionLvl1,
+    }));
 
     triggerConfetti();
     addNotification(`Berhasil membeli ${product.name}! Profit akan otomatis berjalan.`, 'success');

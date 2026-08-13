@@ -199,14 +199,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           </button>
 
           <button
-            onClick={() => setIsTransferModalOpen(true)}
-            className="p-2 sm:p-3 rounded-2xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/70 dark:hover:bg-purple-900/80 text-purple-800 dark:text-purple-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1 shadow-sm border border-purple-200 dark:border-purple-800/50"
-          >
-            <ArrowLeftRight className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" />
-            <span className="text-[10px] sm:text-[11px] truncate w-full">Pindah Saldo</span>
-          </button>
-
-          <button
             onClick={() => setActiveTab('referral')}
             className="p-2 sm:p-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/70 dark:hover:bg-indigo-900/80 text-indigo-800 dark:text-indigo-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1 shadow-sm border border-indigo-200 dark:border-indigo-800/50"
           >
@@ -317,7 +309,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
         <div className="bg-gradient-to-br from-amber-950/20 via-white to-amber-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-5 border-2 border-amber-500/40 shadow-md relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-black text-amber-800 dark:text-amber-300 uppercase tracking-wider">
-              Saldo Profit (35H)
+              Saldo Profit (Kontrak)
             </span>
             <div className="p-2 rounded-xl bg-amber-500 text-slate-950 shadow-sm">
               <Lock className="w-4 h-4" />
@@ -327,8 +319,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             <span className="text-xl sm:text-2xl font-black text-amber-700 dark:text-amber-300">
               Rp {(user.saldoProfit ?? 87500).toLocaleString('id-ID')}
             </span>
-            <p className="text-[11px] text-slate-700 dark:text-slate-300 font-bold mt-1">
-              Terkunci Selama Kontrak
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 font-bold mt-1">
+              Cair Otomatis Saat Durasi Habis
             </p>
           </div>
         </div>
@@ -347,8 +339,8 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             <span className="text-xl sm:text-2xl font-black text-purple-700 dark:text-purple-300">
               Rp {(user.totalReferralCommission ?? 32000).toLocaleString('id-ID')}
             </span>
-            <p className="text-[11px] text-purple-700 dark:text-purple-300 font-extrabold mt-1">
-              Komisi 3 Level
+            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-extrabold mt-1">
+              Otomatis Masuk Saldo Penarikan
             </p>
           </div>
         </div>

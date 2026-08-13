@@ -205,12 +205,12 @@ export const ReferralSystem: React.FC = () => {
           </div>
 
           <div className="p-3 bg-slate-900 text-white border border-slate-700 rounded-xl text-xs space-y-1">
-            <div className="flex items-center space-x-1 text-amber-400 font-bold">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Prosedur Keamanan Admin:</span>
+            <div className="flex items-center space-x-1 text-emerald-400 font-bold">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Komisi Langsung Otomatis:</span>
             </div>
             <p className="text-[11px] text-slate-300">
-              Setiap pencapaian komisi referral membutuhkan tinjauan dan konfirmasi dari <strong>Admin Panel</strong> sebelum dicairkan ke saldo penarikan Anda.
+              Bonus komisi referral 3-level Anda <strong>langsung masuk ke Saldo Penarikan secara otomatis</strong> setelah downline terundang melakukan aktivitas paket investasi.
             </p>
           </div>
         </div>

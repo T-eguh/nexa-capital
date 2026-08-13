@@ -31,8 +31,8 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
 
   const [selectedAmount, setSelectedAmount] = useState<number>(250000);
   const [customAmount, setCustomAmount] = useState<string>('');
-  const [paymentType, setPaymentType] = useState<'AUTO_GATEWAY' | 'QRIS' | 'BANK' | 'EWALLET'>('AUTO_GATEWAY');
-  const [autoGatewayMethod, setAutoGatewayMethod] = useState<'QRIS' | 'VA_BCA' | 'VA_MANDIRI' | 'VA_BRI' | 'GOPAY'>('QRIS');
+  const [paymentType, setPaymentType] = useState<'AUTO_GATEWAY' | 'BANK' | 'EWALLET'>('AUTO_GATEWAY');
+  const [autoGatewayMethod, setAutoGatewayMethod] = useState<'QRIS_1' | 'QRIS_2'>('QRIS_1');
   const [copiedBankAcc, setCopiedBankAcc] = useState<string | null>(null);
 
   // Auto gateway step state
@@ -124,13 +124,13 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
             </div>
             <div>
               <h3 className="text-base font-extrabold flex items-center gap-1.5">
-                <span>Deposit Saldo</span>
+                <span>Deposit Saldo 24 Jam</span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-400 font-black border border-emerald-500/30">
-                  OTOMATIS 24/7
+                  QRIS 1 & QRIS 2
                 </span>
               </h3>
               <p className="text-[11px] text-slate-400">
-                Isi ulang saldo otomatis real-time tanpa jeda
+                Layanan deposit 24 jam nonstop via QRIS 1 & QRIS 2
               </p>
             </div>
           </div>
@@ -142,6 +142,17 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
           </button>
         </div>
 
+        {/* Informational Banner */}
+        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-300 flex items-start space-x-2.5">
+          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-amber-400">Info Deposit 24 Jam:</p>
+            <p className="text-[11px] text-slate-300 leading-snug">
+              Deposit tersedia 24 jam <strong>CUMA SATU JALUR (QRIS 1 & QRIS 2)</strong>. Metode Bank/VA lain sedang <strong>MAINTENANCE SEMENTARA</strong>.
+            </p>
+          </div>
+        </div>
+
         {/* STEP 1: SELECT AMOUNT & METHOD */}
         {gatewayStep === 'SELECT' && (
           <>
@@ -149,7 +160,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex justify-between items-center">
                 <span>Pilih Nominal Deposit (Rp)</span>
-                <span className="text-[10px] text-emerald-500 font-mono font-extrabold">Proses Otomatis</span>
+                <span className="text-[10px] text-emerald-500 font-mono font-extrabold">24 Jam Instan</span>
               </label>
 
               <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -185,7 +196,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
             {/* Payment Gateway Category Tabs */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                Pilih Metode Pembayaran
+                Pilih Jalur Deposit
               </label>
 
               <div className="grid grid-cols-3 gap-2">
@@ -197,124 +208,118 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                       : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400'
                   }`}
                 >
-                  <Zap className="w-5 h-5 fill-current text-emerald-400" />
-                  <span className="text-xs">Gateway Otomatis</span>
-                  <span className="text-[9px] text-emerald-500 font-bold">Instan / 1 Detik</span>
+                  <QrCode className="w-5 h-5 text-emerald-400" />
+                  <span className="text-xs">QRIS 1 & QRIS 2</span>
+                  <span className="text-[9px] text-emerald-400 font-bold bg-emerald-500/20 px-1.5 py-0.5 rounded">AKTIF 24 JAM ⚡</span>
                 </button>
 
                 <button
                   onClick={() => setPaymentType('BANK')}
                   className={`p-3 rounded-2xl border flex flex-col items-center justify-center space-y-1 transition-all ${
                     paymentType === 'BANK'
-                      ? 'border-blue-500 bg-blue-500/15 text-blue-400 font-extrabold shadow-md'
+                      ? 'border-rose-500 bg-rose-500/15 text-rose-400 font-extrabold shadow-md'
                       : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400'
                   }`}
                 >
                   <Building2 className="w-5 h-5" />
                   <span className="text-xs">Transfer Bank</span>
-                  <span className="text-[9px] text-slate-500">Manual / QR</span>
+                  <span className="text-[9px] text-rose-400 font-bold bg-rose-500/20 px-1.5 py-0.5 rounded">MAINTENANCE</span>
                 </button>
 
                 <button
                   onClick={() => setPaymentType('EWALLET')}
                   className={`p-3 rounded-2xl border flex flex-col items-center justify-center space-y-1 transition-all ${
                     paymentType === 'EWALLET'
-                      ? 'border-amber-500 bg-amber-500/15 text-amber-400 font-extrabold shadow-md'
+                      ? 'border-rose-500 bg-rose-500/15 text-rose-400 font-extrabold shadow-md'
                       : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400'
                   }`}
                 >
                   <Wallet className="w-5 h-5" />
-                  <span className="text-xs">E-Wallet</span>
-                  <span className="text-[9px] text-slate-500">Dana/OVO/GoPay</span>
+                  <span className="text-xs">E-Wallet Direct</span>
+                  <span className="text-[9px] text-rose-400 font-bold bg-rose-500/20 px-1.5 py-0.5 rounded">MAINTENANCE</span>
                 </button>
               </div>
             </div>
 
-            {/* AUTO GATEWAY SUBCATEGORY SELECTION */}
+            {/* AUTO GATEWAY QRIS 1 & QRIS 2 SELECTION */}
             {paymentType === 'AUTO_GATEWAY' && (
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-extrabold text-white flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-emerald-400" />
-                    <span>Pilih Channel Payment Gateway Otomatis:</span>
+                    <span>Pilih Jalur QRIS 24 Jam:</span>
                   </span>
-                  <span className="text-[10px] text-emerald-400 font-mono">Status: ACTIVE ⚡</span>
+                  <span className="text-[10px] text-emerald-400 font-mono">STATUS: ONLINE 24/7 ⚡</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {[
-                    { id: 'QRIS', label: 'QRIS Instant (All Apps)', detail: 'BCA, Dana, OVO, ShopeePay' },
-                    { id: 'VA_BCA', label: 'BCA Virtual Account', detail: 'VA Otomatis 24 Jam' },
-                    { id: 'VA_MANDIRI', label: 'Mandiri Virtual Account', detail: 'Livin by Mandiri' },
-                    { id: 'GOPAY', label: 'GoPay / QRIS Direct', detail: 'Gojek & QRIS Instant' },
+                    { id: 'QRIS_1', label: 'QRIS 1 (Utama 24 Jam)', detail: 'BCA, DANA, OVO, ShopeePay, Mandiri' },
+                    { id: 'QRIS_2', label: 'QRIS 2 (Backup 24 Jam)', detail: 'Semua Aplikasi e-Wallet & m-Banking' },
                   ].map((item) => (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => setAutoGatewayMethod(item.id as any)}
-                      className={`p-2.5 rounded-xl border text-left transition-all ${
+                      className={`p-3 rounded-xl border text-left transition-all ${
                         autoGatewayMethod === item.id
-                          ? 'border-emerald-500 bg-emerald-950/60 text-white font-bold'
+                          ? 'border-emerald-500 bg-emerald-950/60 text-white font-bold ring-1 ring-emerald-500'
                           : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-200'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs">{item.label}</span>
-                        {autoGatewayMethod === item.id && <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
+                        <span className="text-xs font-extrabold text-emerald-400">{item.label}</span>
+                        {autoGatewayMethod === item.id && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
                       </div>
-                      <span className="text-[10px] text-slate-500 block mt-0.5">{item.detail}</span>
+                      <span className="text-[10px] text-slate-400 block mt-1 leading-tight">{item.detail}</span>
                     </button>
                   ))}
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-300 flex items-center space-x-2">
                   <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
-                  <span>Sistem mendeteksi transfer secara otomatis & saldo langsung dikreditkan!</span>
+                  <span>Scan QRIS 1 atau QRIS 2 untuk deposit otomatis 24 jam langsung masuk ke saldo utama!</span>
                 </div>
               </div>
             )}
 
-            {/* MANUAL BANK ACCOUNTS */}
+            {/* MAINTENANCE NOTICE FOR BANK */}
             {paymentType === 'BANK' && (
-              <div className="space-y-2">
-                {bankAccounts.map((acc) => (
-                  <div
-                    key={acc.bank}
-                    className="p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between"
-                  >
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 dark:text-white">{acc.bank}</span>
-                      <p className="text-[11px] font-mono text-slate-600 dark:text-slate-300">{acc.number}</p>
-                      <span className="text-[10px] text-slate-400 block">a.n. {acc.name}</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleCopyAcc(acc.number)}
-                      className="px-2.5 py-1 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-bold flex items-center space-x-1"
-                    >
-                      {copiedBankAcc === acc.number ? <Check className="w-3 h-3 text-emerald-500" /> : <Copy className="w-3 h-3" />}
-                      <span>{copiedBankAcc === acc.number ? 'Tersalin' : 'Salin'}</span>
-                    </button>
-                  </div>
-                ))}
+              <div className="p-4 bg-slate-950 rounded-2xl border border-rose-500/30 text-xs text-center space-y-2">
+                <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <h4 className="font-bold text-white text-sm">Metode Bank Lain Sedang Maintenance</h4>
+                <p className="text-slate-400 text-[11px] leading-relaxed">
+                  Jalur Transfer Rekening Bank saat ini sedang <strong>MAINTENANCE SEMENTARA</strong>. Silakan gunakan jalur <strong>QRIS 1</strong> atau <strong>QRIS 2</strong> yang siap melayani deposit 24 jam nonstop.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setPaymentType('AUTO_GATEWAY')}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all"
+                >
+                  Gunakan Jalur QRIS 1 & QRIS 2 (24 Jam)
+                </button>
               </div>
             )}
 
-            {/* MANUAL EWALLET */}
+            {/* MAINTENANCE NOTICE FOR EWALLET DIRECT */}
             {paymentType === 'EWALLET' && (
-              <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs space-y-2">
-                <p className="font-bold text-slate-900 dark:text-white">Nomor E-Wallet Resmi (Dana / OVO / GoPay):</p>
-                <div className="font-mono text-sm font-extrabold text-amber-500 bg-white dark:bg-slate-900 p-2.5 rounded-xl flex justify-between items-center border border-slate-200 dark:border-slate-800">
-                  <span>0812-9876-5432</span>
-                  <button
-                    type="button"
-                    onClick={() => handleCopyAcc('081298765432')}
-                    className="text-xs text-amber-400 font-sans underline"
-                  >
-                    Salin
-                  </button>
+              <div className="p-4 bg-slate-950 rounded-2xl border border-rose-500/30 text-xs text-center space-y-2">
+                <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
+                  <AlertCircle className="w-6 h-6" />
                 </div>
-                <span className="text-[10px] text-slate-400">Atas Nama: NEXA OFFICIAL TREASURY</span>
+                <h4 className="font-bold text-white text-sm">Metode E-Wallet Direct Sedang Maintenance</h4>
+                <p className="text-slate-400 text-[11px] leading-relaxed">
+                  Jalur Transfer E-Wallet langsung saat ini sedang <strong>MAINTENANCE SEMENTARA</strong>. Silakan scan melalui <strong>QRIS 1</strong> atau <strong>QRIS 2</strong> menggunakan aplikasi DANA, GoPay, OVO, ShopeePay Anda (Aktif 24 jam).
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setPaymentType('AUTO_GATEWAY')}
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all"
+                >
+                  Gunakan Jalur QRIS 1 & QRIS 2 (24 Jam)
+                </button>
               </div>
             )}
 
