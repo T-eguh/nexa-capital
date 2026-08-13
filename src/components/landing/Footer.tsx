@@ -16,20 +16,27 @@ export const Footer: React.FC<{ lang: 'ID' | 'EN' }> = ({ lang }) => {
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
               Platform investasi saham dan produk Fast Yield Nexa Capital dengan dividen cair harian otomatis, sistem referral 3-level, serta penarikan dana instan 24 jam.
             </p>
-            <div className="flex items-center space-x-3 pt-2">
+            <div className="flex items-center space-x-2 pt-2">
               <a
-                href={theme.supportTelegram}
+                href="https://t.me/CSnexacapital"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors"
-                title="Telegram Support"
+                className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors flex items-center space-x-1.5 text-xs font-bold"
+                title="CS Bantuan Telegram"
               >
-                <Send className="w-4 h-4 text-sky-400" />
+                <Send className="w-3.5 h-3.5 text-sky-400" />
+                <span>CS Telegram</span>
               </a>
-              <div className="flex items-center space-x-1 text-[11px] text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Enkripsi 256-Bit SSL</span>
-              </div>
+              <a
+                href="https://t.me/nexacapitalcom"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-white transition-colors flex items-center space-x-1.5 text-xs font-bold"
+                title="Saluran Telegram Resmi"
+              >
+                <Send className="w-3.5 h-3.5 text-blue-400" />
+                <span>Saluran Resmi</span>
+              </a>
             </div>
           </div>
 

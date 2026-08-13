@@ -18,6 +18,8 @@ import {
   LogOut,
   KeyRound,
   ShieldAlert,
+  Send,
+  Share2,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useApp } from '../context/AppContext';
@@ -28,7 +30,6 @@ import { SecurityCenterModal } from './profile/SecurityCenterModal';
 import { VipStatusModal } from './VipStatusModal';
 import { LanguageSelector } from './LanguageSelector';
 import { SocialShareModal } from './SocialShareModal';
-import { Share2 } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: string;
@@ -107,8 +108,8 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Right Section: Balance, User Profile, Security Center, Notifications */}
             <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
-              {/* Quick Deposit & Tarik Buttons */}
-              <div className="flex items-center space-x-1 shrink-0">
+              {/* Quick Deposit & Tarik Buttons - Hidden on small mobile to prevent header overflow */}
+              <div className="hidden sm:flex items-center space-x-1 shrink-0">
                 <button
                   onClick={openDepositModal}
                   className="inline-flex items-center space-x-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm transition-all hover:opacity-90 active:scale-95 whitespace-nowrap shrink-0"
@@ -129,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* User Profile Trigger Button */}
               <button
                 onClick={handleOpenProfile}
-                className="px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center space-x-1 text-xs font-bold shrink-0 whitespace-nowrap"
+                className="hidden sm:flex px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all items-center space-x-1 text-xs font-bold shrink-0 whitespace-nowrap"
                 title="Pengaturan Profil Akun"
               >
                 <UserIcon className="w-3.5 h-3.5 text-sky-400 shrink-0" />
@@ -152,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Social Share Trigger */}
               <button
                 onClick={() => setIsShareOpen(true)}
-                className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-teal-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shrink-0"
+                className="hidden md:flex p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-teal-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shrink-0"
                 title="Bagikan Platform"
               >
                 <Share2 className="w-3.5 h-3.5 text-teal-400" />
@@ -161,7 +162,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Security Center Trigger Button */}
               <button
                 onClick={() => setIsSecurityOpen(true)}
-                className="p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-emerald-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shrink-0"
+                className="hidden md:flex p-1.5 sm:p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-emerald-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all shrink-0"
                 title="Pusat Keamanan & Perangkat"
               >
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -181,7 +182,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
 
                 {showNotifMenu && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-2 z-50">
+                  <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-2 z-50">
                     <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
                       <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                         Notifikasi Terkini
@@ -214,11 +215,11 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Logout Button */}
               <button
                 onClick={logout}
-                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-rose-500 hover:text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 transition-all flex items-center space-x-1 text-xs font-bold shrink-0 whitespace-nowrap"
+                className="hidden lg:flex p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg text-rose-500 hover:text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900 transition-all items-center space-x-1 text-xs font-bold shrink-0 whitespace-nowrap"
                 title="Keluar / Logout Akun"
               >
                 <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Keluar</span>
+                <span>Keluar</span>
               </button>
 
               {/* Mobile Hamburger Toggle */}
@@ -234,38 +235,64 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Mobile Drawer Navigation */}
         {showMobileMenu && (
-          <div className="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 space-y-2">
-            <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl mb-3">
-              <div>
-                <span className="text-xs text-slate-400 font-medium">Saldo Utama</span>
-                <p className="text-base font-bold text-slate-900 dark:text-emerald-400">
-                  Rp {(user.saldoPenarikan ?? user.balance ?? 0).toLocaleString('id-ID')}
-                </p>
+          <div className="lg:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 space-y-3">
+            {/* User Profile Header Card */}
+            <div className="p-3 bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl border border-slate-700 text-white space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs text-white">
+                    {user.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white leading-tight">{user.name}</p>
+                    <span className="text-[10px] text-slate-300">Akun Terverifikasi</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowMobileMenu(false);
+                    setIsVipModalOpen(true);
+                  }}
+                  className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[10px]"
+                >
+                  {user.vipLevel || 'VIP 0'}
+                </button>
               </div>
-              <div className="flex space-x-1">
-                <button
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    openDepositModal();
-                  }}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white"
-                  style={{ backgroundColor: theme.primaryColor }}
-                >
-                  Deposit
-                </button>
-                <button
-                  onClick={() => {
-                    setShowMobileMenu(false);
-                    openWithdrawModal();
-                  }}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200"
-                >
-                  Tarik
-                </button>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-700/80">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-medium block">Saldo Utama</span>
+                  <p className="text-sm font-black text-emerald-400">
+                    Rp {(user.saldoPenarikan ?? user.balance ?? 0).toLocaleString('id-ID')}
+                  </p>
+                </div>
+                <div className="flex space-x-1.5">
+                  <button
+                    onClick={() => {
+                      setShowMobileMenu(false);
+                      openDepositModal();
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-white shadow-sm"
+                    style={{ backgroundColor: theme.primaryColor }}
+                  >
+                    Deposit
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMobileMenu(false);
+                      openWithdrawModal();
+                    }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-700 text-slate-200"
+                  >
+                    Tarik
+                  </button>
+                </div>
               </div>
             </div>
 
+            {/* Main Nav Links */}
             <div className="space-y-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">Menu Navigasi</span>
               {navItems.map((item) => (
                 <button
                   key={item.id}
@@ -274,15 +301,77 @@ export const Header: React.FC<HeaderProps> = ({
                     setActiveTab(item.id);
                     setShowMobileMenu(false);
                   }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium ${
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold transition-all ${
                     activeTab === item.id && !isAdminMode
-                      ? 'bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400 font-bold'
+                      ? 'bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400'
                       : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
                   }`}
                 >
                   {item.label}
                 </button>
               ))}
+            </div>
+
+            {/* Telegram CS & Channel Links */}
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2">Layanan Telegram</span>
+              <div className="grid grid-cols-2 gap-2">
+                <a
+                  href="https://t.me/CSnexacapital"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 text-xs font-bold flex items-center justify-center space-x-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>CS Telegram</span>
+                </a>
+                <a
+                  href="https://t.me/nexacapitalcom"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-xs font-bold flex items-center justify-center space-x-1.5"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Saluran Telegram</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Secondary Utilities */}
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    setShowMobileMenu(false);
+                    handleOpenProfile();
+                  }}
+                  className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold flex items-center space-x-1"
+                >
+                  <UserIcon className="w-4 h-4 text-sky-400" />
+                  <span>Profil</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMobileMenu(false);
+                    setIsSecurityOpen(true);
+                  }}
+                  className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold flex items-center space-x-1"
+                >
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>Keamanan</span>
+                </button>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowMobileMenu(false);
+                  logout();
+                }}
+                className="px-3 py-2 rounded-lg text-rose-500 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs font-bold flex items-center space-x-1"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Keluar</span>
+              </button>
             </div>
           </div>
         )}

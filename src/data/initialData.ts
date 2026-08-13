@@ -68,7 +68,8 @@ export const INITIAL_APP_THEME: AppThemeConfig = {
   accentColor: '#3b82f6',
   isDarkMode: false,
   supportWhatsapp: '+6281234567890',
-  supportTelegram: 'https://t.me/nexacapital_official',
+  supportTelegram: 'https://t.me/CSnexacapital',
+  telegramChannel: 'https://t.me/nexacapitalcom',
   currencySymbol: 'Rp',
 };
 

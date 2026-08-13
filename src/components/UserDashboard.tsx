@@ -173,87 +173,89 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           </span>
           <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Pintasan Fitur Utama</span>
         </div>
-        <div className="grid grid-cols-4 sm:grid-cols-9 gap-2.5 text-center text-xs">
+        <div className="grid grid-cols-5 md:grid-cols-10 gap-2 sm:gap-2.5 text-center text-xs">
           <button
             onClick={openDepositModal}
-            className="p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/70 dark:hover:bg-blue-900/80 text-blue-700 dark:text-blue-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-blue-200 dark:border-blue-800/50"
+            className="p-2 sm:p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/70 dark:hover:bg-blue-900/80 text-blue-700 dark:text-blue-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1 shadow-sm border border-blue-200 dark:border-blue-800/50"
           >
-            <ArrowDownLeft className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            <span className="text-[11px]">Deposit</span>
+            <ArrowDownLeft className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
+            <span className="text-[10px] sm:text-[11px] truncate w-full">Deposit</span>
           </button>
 
           <button
             onClick={openWithdrawModal}
-            className="p-3 rounded-2xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/70 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-amber-200 dark:border-amber-800/50"
+            className="p-2 sm:p-3 rounded-2xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/70 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1 shadow-sm border border-amber-200 dark:border-amber-800/50"
           >
-            <ArrowUpRight className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            <span className="text-[11px]">Penarikan</span>
+            <ArrowUpRight className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400" />
+            <span className="text-[10px] sm:text-[11px] truncate w-full">Penarikan</span>
           </button>
 
           <button
             onClick={() => setActiveTab('products')}
-            className="p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/70 dark:hover:bg-emerald-900/80 text-emerald-800 dark:text-emerald-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-emerald-200 dark:border-emerald-800/50"
+            className="p-2 sm:p-3 rounded-2xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/70 dark:hover:bg-emerald-900/80 text-emerald-800 dark:text-emerald-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1 shadow-sm border border-emerald-200 dark:border-emerald-800/50"
           >
-            <TrendingUp className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            <span className="text-[11px]">Beli Paket</span>
+            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-[10px] sm:text-[11px] truncate w-full">Beli Paket</span>
           </button>
 
           <button
             onClick={() => setIsTransferModalOpen(true)}
-            className="p-3 rounded-2xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/70 dark:hover:bg-purple-900/80 text-purple-800 dark:text-purple-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-purple-200 dark:border-purple-800/50"
+            className="p-2 sm:p-3 rounded-2xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/70 dark:hover:bg-purple-900/80 text-purple-800 dark:text-purple-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1 shadow-sm border border-purple-200 dark:border-purple-800/50"
           >
-            <ArrowLeftRight className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-            <span className="text-[11px]">Pindah Saldo</span>
+            <ArrowLeftRight className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" />
+            <span className="text-[10px] sm:text-[11px] truncate w-full">Pindah Saldo</span>
           </button>
 
           <button
             onClick={() => setActiveTab('referral')}
-            className="p-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/70 dark:hover:bg-indigo-900/80 text-indigo-800 dark:text-indigo-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-indigo-200 dark:border-indigo-800/50"
+            className="p-2 sm:p-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/70 dark:hover:bg-indigo-900/80 text-indigo-800 dark:text-indigo-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1 shadow-sm border border-indigo-200 dark:border-indigo-800/50"
           >
-            <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            <span className="text-[11px]">Referral</span>
+            <Users className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 dark:text-indigo-400" />
+            <span className="text-[10px] sm:text-[11px] truncate w-full">Referral</span>
           </button>
 
           <button
             onClick={() => setActiveTab('portfolio')}
-            className="p-3 rounded-2xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/70 dark:hover:bg-rose-900/80 text-rose-800 dark:text-rose-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-rose-200 dark:border-rose-800/50"
+            className="p-2 sm:p-3 rounded-2xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/70 dark:hover:bg-rose-900/80 text-rose-800 dark:text-rose-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1 shadow-sm border border-rose-200 dark:border-rose-800/50"
           >
-            <PieChart className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-            <span className="text-[11px]">Portofolio</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('history')}
-            className="p-3 rounded-2xl bg-sky-50 hover:bg-sky-100 dark:bg-sky-950/70 dark:hover:bg-sky-900/80 text-sky-800 dark:text-sky-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-sky-200 dark:border-sky-800/50"
-          >
-            <FileText className="w-5 h-5 text-sky-600 dark:text-sky-400" />
-            <span className="text-[11px]">Riwayat</span>
+            <PieChart className="w-4 h-4 sm:w-5 sm:h-5 text-rose-600 dark:text-rose-400" />
+            <span className="text-[10px] sm:text-[11px] truncate w-full">Portofolio</span>
           </button>
 
           <button
             onClick={() => setActiveTab('ledger')}
-            className="p-3 rounded-2xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/70 dark:hover:bg-teal-900/80 text-teal-800 dark:text-teal-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-teal-200 dark:border-teal-800/50"
+            className="p-2 sm:p-3 rounded-2xl bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/70 dark:hover:bg-teal-900/80 text-teal-800 dark:text-teal-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1 shadow-sm border border-teal-200 dark:border-teal-800/50"
           >
-            <CreditCard className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-            <span className="text-[11px]">Ledger</span>
+            <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600 dark:text-teal-400" />
+            <span className="text-[10px] sm:text-[11px] truncate w-full">Ledger</span>
           </button>
 
           <button
             onClick={() => setActiveTab('testimonials')}
-            className="p-3 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-emerald-500/30"
+            className="p-2 sm:p-3 rounded-2xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1 shadow-sm border border-emerald-500/30"
           >
-            <Camera className="w-5 h-5 text-emerald-400" />
-            <span className="text-[11px]">Galeri Cair</span>
+            <Camera className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+            <span className="text-[10px] sm:text-[11px] truncate w-full">Galeri Cair</span>
           </button>
 
           <a
-            href={theme.supportTelegram}
+            href="https://t.me/CSnexacapital"
             target="_blank"
             rel="noopener noreferrer"
-            className="p-3 rounded-2xl bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/70 dark:hover:bg-cyan-900/80 text-cyan-800 dark:text-cyan-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1.5 shadow-sm border border-cyan-200 dark:border-cyan-800/50"
+            className="p-2 sm:p-3 rounded-2xl bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/70 dark:hover:bg-cyan-900/80 text-cyan-800 dark:text-cyan-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1 shadow-sm border border-cyan-200 dark:border-cyan-800/50"
           >
-            <Send className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-            <span className="text-[11px]">CS Bantuan</span>
+            <Send className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-600 dark:text-cyan-400" />
+            <span className="text-[10px] sm:text-[11px] truncate w-full">CS Bantuan</span>
+          </a>
+
+          <a
+            href="https://t.me/nexacapitalcom"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 sm:p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/70 dark:hover:bg-blue-900/80 text-blue-800 dark:text-blue-300 font-extrabold hover:scale-105 transition-all flex flex-col items-center justify-center space-y-1 shadow-sm border border-blue-200 dark:border-blue-800/50"
+          >
+            <Send className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
+            <span className="text-[10px] sm:text-[11px] truncate w-full">Saluran</span>
           </a>
         </div>
       </div>

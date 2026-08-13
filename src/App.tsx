@@ -26,6 +26,7 @@ import { NexaCapitalLogo } from './components/NexaCapitalLogo';
 import { PwaInstallPrompt } from './components/PwaInstallPrompt';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { UserProfileModal } from './components/profile/UserProfileModal';
+import { WelcomeModal } from './components/WelcomeModal';
 import { Shield, LogOut, ShieldCheck, Send, ArrowLeft, ArrowRight } from 'lucide-react';
 
 const MainAppContent: React.FC = () => {
@@ -33,6 +34,7 @@ const MainAppContent: React.FC = () => {
   const [isDepositOpen, setIsDepositOpen] = useState<boolean>(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState<boolean>(false);
   const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
+  const [isWelcomeOpen, setIsWelcomeOpen] = useState<boolean>(true);
 
   // Separate Route Detection: /admin vs / (Member)
   const [currentRoute, setCurrentRoute] = useState<'/admin' | '/'>(() => {
@@ -216,6 +218,14 @@ const MainAppContent: React.FC = () => {
       <DepositModal isOpen={isDepositOpen} onClose={() => setIsDepositOpen(false)} />
       <WithdrawModal isOpen={isWithdrawOpen} onClose={() => setIsWithdrawOpen(false)} />
       <UserProfileModal isOpen={isProfileOpen} onClose={() => setIsProfileOpen(false)} />
+      <WelcomeModal
+        isOpen={isWelcomeOpen}
+        onClose={() => setIsWelcomeOpen(false)}
+        onOpenMarket={() => {
+          setActiveTab('products');
+          setIsWelcomeOpen(false);
+        }}
+      />
 
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 border-t border-slate-800 text-xs py-8 mt-12">
@@ -234,21 +244,26 @@ const MainAppContent: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center space-x-4 text-xs font-medium">
+            <div className="flex items-center space-x-3 text-xs font-medium">
               <a
-                href={theme.supportTelegram}
+                href="https://t.me/CSnexacapital"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-1 hover:text-white transition-colors"
+                className="flex items-center space-x-1 hover:text-white transition-colors text-cyan-400 font-bold"
               >
-                <Send className="w-3.5 h-3.5 text-sky-400" />
-                <span>Telegram Support</span>
+                <Send className="w-3.5 h-3.5" />
+                <span>CS Telegram (@CSnexacapital)</span>
               </a>
               <span className="text-slate-700">•</span>
-              <span className="flex items-center space-x-1 text-emerald-400">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Enkripsi Anti-DDoS 256-Bit</span>
-              </span>
+              <a
+                href="https://t.me/nexacapitalcom"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-1 hover:text-white transition-colors text-blue-400 font-bold"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>Saluran Telegram</span>
+              </a>
             </div>
           </div>
 

@@ -45,7 +45,7 @@ export const ContactSection: React.FC<{ lang: 'ID' | 'EN' }> = ({ lang }) => {
 
             <div className="space-y-4 pt-4">
               <a
-                href={theme.supportTelegram}
+                href="https://t.me/CSnexacapital"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-sky-500/50 transition-all flex items-center space-x-4 group"
@@ -54,8 +54,23 @@ export const ContactSection: React.FC<{ lang: 'ID' | 'EN' }> = ({ lang }) => {
                   <Send className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-white">Telegram Support Channel</h4>
-                  <p className="text-[11px] text-slate-400">Respon tercepat & saluran informasi resmi</p>
+                  <h4 className="text-xs font-bold text-white">CS Bantuan Telegram (@CSnexacapital)</h4>
+                  <p className="text-[11px] text-slate-400">Respon kilat 24/7 untuk bantuan member & kendala akun</p>
+                </div>
+              </a>
+
+              <a
+                href="https://t.me/nexacapitalcom"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-blue-500/50 transition-all flex items-center space-x-4 group"
+              >
+                <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                  <Send className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white">Saluran Resmi Telegram (nexacapitalcom)</h4>
+                  <p className="text-[11px] text-slate-400">Pengumuman dividen, edukasi trading & kabar terbaru</p>
                 </div>
               </a>
 

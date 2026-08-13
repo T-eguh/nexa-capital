@@ -153,5 +153,6 @@ export interface AppThemeConfig {
   isDarkMode: boolean;
   supportWhatsapp: string;
   supportTelegram: string;
+  telegramChannel?: string;
   currencySymbol: string;
 }
