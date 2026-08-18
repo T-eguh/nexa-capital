@@ -8,6 +8,7 @@ import {
   DownlineUser,
   Testimonial,
   VipLevel,
+  PlatformSettings,
 } from '../types';
 import {
   INITIAL_USER,
@@ -16,6 +17,7 @@ import {
   INITIAL_TRANSACTIONS,
   INITIAL_DOWNLINES,
   INITIAL_TESTIMONIALS,
+  INITIAL_PLATFORM_SETTINGS,
 } from '../data/initialData';
 
 interface NotificationItem {
@@ -26,6 +28,11 @@ interface NotificationItem {
 }
 
 interface AppContextType {
+  // Platform & System Settings (Dynamic config for Admin)
+  platformSettings: PlatformSettings;
+  updatePlatformSettings: (newSettings: Partial<PlatformSettings>) => void;
+  resetPlatformSettings: () => void;
+
   // User state
   user: UserProfile;
   setUser: React.Dispatch<React.SetStateAction<UserProfile>>;
@@ -72,6 +79,7 @@ interface AppContextType {
   rejectTestimonial: (testimonialId: string) => void;
   addProduct: (product: Omit<InvestmentProduct, 'id'>) => void;
   updateProduct: (product: InvestmentProduct) => void;
+  deleteProduct: (productId: string) => void;
   toggleProductStatus: (id: string) => void;
   topUpUserBalanceAdmin: (amount: number) => void;
   triggerConfetti: () => void;
@@ -162,7 +170,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return saved ? JSON.parse(saved) : INITIAL_TESTIMONIALS;
   });
 
-  const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(() => {
+    const saved = localStorage.getItem('nexainvest_platform_settings');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          ...INITIAL_PLATFORM_SETTINGS,
+          ...parsed,
+        };
+      } catch (e) {
+        console.error('Error loading platform settings:', e);
+      }
+    }
+    return INITIAL_PLATFORM_SETTINGS;
+  });
+
+  const updatePlatformSettings = (newSettings: Partial<PlatformSettings>) => {
+    setPlatformSettings((prev) => {
+      const updated = { ...prev, ...newSettings };
+      localStorage.setItem('nexainvest_platform_settings', JSON.stringify(updated));
+      return updated;
+    });
+    addNotification('Pengaturan sistem berhasil diperbarui!', 'success');
+  };
+
+  const resetPlatformSettings = () => {
+    setPlatformSettings(INITIAL_PLATFORM_SETTINGS);
+    localStorage.setItem('nexainvest_platform_settings', JSON.stringify(INITIAL_PLATFORM_SETTINGS));
+    addNotification('Pengaturan sistem dikembalikan ke default.', 'info');
+  };
+
+  const [isAdminMode, setIsAdminMode] = useState<boolean>(() => {
+    const savedAdmin = localStorage.getItem('nexainvest_is_admin_mode');
+    return savedAdmin === 'true';
+  });
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   // Auth State
@@ -196,17 +238,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return 'VIP 0';
   };
 
-  // Sync Auth State
+  // Sync Auth & Admin State to localStorage
   useEffect(() => {
     localStorage.setItem('nexainvest_is_logged_in', isLoggedIn ? 'true' : 'false');
-  }, [isLoggedIn]);
+    localStorage.setItem('nexainvest_is_admin_mode', isAdminMode ? 'true' : 'false');
+  }, [isLoggedIn, isAdminMode]);
 
   const login = (emailOrPhone: string, pass: string) => {
     if (!emailOrPhone.trim() || !pass.trim()) {
       return { success: false, message: 'Harap isi semua kolom login.' };
     }
+
+    const cleanInput = emailOrPhone.trim().toLowerCase().replace(/^0+/, '').replace(/^\+62/, '');
+    const cleanPass = pass.trim();
+
+    // Check if logging in with admin credentials through main form
+    const adminIdentifiers = ['admin', 'admin@nexa.com', 'admin@nexainvest.id', 'admin@nexacapital.com', '81234567890', '081234567890'];
+    const adminPasswords = ['admin123', 'admin', 'admin321', 'password'];
+
+    if ((adminIdentifiers.includes(cleanInput) || emailOrPhone.trim().toLowerCase() === 'admin') && adminPasswords.includes(cleanPass)) {
+      setIsAdminMode(true);
+      setIsLoggedIn(true);
+      localStorage.setItem('nexainvest_is_admin_mode', 'true');
+      localStorage.setItem('nexainvest_is_logged_in', 'true');
+      addNotification('Selamat datang kembali, Administrator System!', 'success');
+      triggerConfetti();
+      return { success: true, message: 'Berhasil masuk sebagai Admin.' };
+    }
+
     setIsAdminMode(false);
     setIsLoggedIn(true);
+    localStorage.setItem('nexainvest_is_admin_mode', 'false');
+    localStorage.setItem('nexainvest_is_logged_in', 'true');
     addNotification(`Selamat datang kembali, ${user.name}!`, 'success');
     triggerConfetti();
     return { success: true, message: 'Berhasil masuk ke akun Anda.' };
@@ -218,15 +281,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const cleanUser = username.trim().toLowerCase();
+    const cleanNumeric = cleanUser.replace(/^0+/, '').replace(/^\+62/, '');
+    const cleanPass = pass.trim();
+
+    const validUsernames = [
+      'admin',
+      'admin@nexa.com',
+      'admin@nexainvest.id',
+      'admin@nexacapital.com',
+      '81234567890',
+      '081234567890',
+      '1234567890',
+    ];
+
+    const validPasswords = ['admin123', 'admin', 'admin321', 'password'];
+
     if (
-      (cleanUser === 'admin@nexainvest.id' || cleanUser === 'admin') &&
-      (pass === 'admin123' || pass === 'admin')
+      validUsernames.includes(cleanUser) ||
+      validUsernames.includes(cleanNumeric) ||
+      cleanUser.includes('admin')
     ) {
-      setIsAdminMode(true);
-      setIsLoggedIn(true);
-      addNotification('Selamat datang, Administrator System!', 'success');
-      triggerConfetti();
-      return { success: true, message: 'Akses Admin Berhasil Diberikan.' };
+      if (validPasswords.includes(cleanPass)) {
+        setIsAdminMode(true);
+        setIsLoggedIn(true);
+        localStorage.setItem('nexainvest_is_admin_mode', 'true');
+        localStorage.setItem('nexainvest_is_logged_in', 'true');
+        addNotification('Selamat datang, Administrator System!', 'success');
+        triggerConfetti();
+        return { success: true, message: 'Akses Admin Berhasil Diberikan.' };
+      }
     }
 
     return {
@@ -276,6 +359,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logout = () => {
     setIsLoggedIn(false);
     setIsAdminMode(false);
+    localStorage.removeItem('nexainvest_is_logged_in');
+    localStorage.removeItem('nexainvest_is_admin_mode');
+    localStorage.removeItem('nexa_auth_token');
+    localStorage.removeItem('nexa_refresh_token');
     addNotification('Anda telah keluar dari sistem.', 'info');
   };
 
@@ -405,12 +492,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTransactions((prev) => [newTx, ...prev]);
 
     // 3-LEVEL REFERRAL COMMISSION SYSTEM (Directly Auto-credited to Saldo Penarikan)
-    // Level 1: 32% (50k * 32% = 16k)
-    // Level 2: 2% (50k * 2% = 1k)
-    // Level 3: 1% (50k * 1% = 500)
-    const commissionLvl1 = Math.round(product.price * 0.32);
-    const commissionLvl2 = Math.round(product.price * 0.02);
-    const commissionLvl3 = Math.round(product.price * 0.01);
+    const lvl1Pct = platformSettings.referralLvl1Pct || 32;
+    const lvl2Pct = platformSettings.referralLvl2Pct || 2;
+    const lvl3Pct = platformSettings.referralLvl3Pct || 1;
+
+    const commissionLvl1 = Math.round(product.price * (lvl1Pct / 100));
+    const commissionLvl2 = Math.round(product.price * (lvl2Pct / 100));
+    const commissionLvl3 = Math.round(product.price * (lvl3Pct / 100));
 
     const refTxLvl1: Transaction = {
       id: generateUniqueTxId('tx-ref-l1'),
@@ -418,7 +506,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       type: 'REFERRAL_COMMISSION',
       amount: commissionLvl1,
       status: 'APPROVED',
-      note: `Komisi Referral Lvl 1 (32%) dari pembelian ${product.name} (Langsung Masuk Saldo Penarikan)`,
+      note: `Komisi Referral Lvl 1 (${lvl1Pct}%) dari pembelian ${product.name} (Langsung Masuk Saldo Penarikan)`,
       date: new Date().toISOString(),
       referralLevel: 1,
     };
@@ -429,7 +517,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       type: 'REFERRAL_COMMISSION',
       amount: commissionLvl2,
       status: 'APPROVED',
-      note: `Komisi Referral Lvl 2 (2%) dari pembelian ${product.name}`,
+      note: `Komisi Referral Lvl 2 (${lvl2Pct}%) dari pembelian ${product.name}`,
       date: new Date().toISOString(),
       referralLevel: 2,
     };
@@ -440,7 +528,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       type: 'REFERRAL_COMMISSION',
       amount: commissionLvl3,
       status: 'APPROVED',
-      note: `Komisi Referral Lvl 3 (1%) dari pembelian ${product.name}`,
+      note: `Komisi Referral Lvl 3 (${lvl3Pct}%) dari pembelian ${product.name}`,
       date: new Date().toISOString(),
       referralLevel: 3,
     };
@@ -789,21 +877,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ...product,
       id: `prod-${Date.now()}`,
     };
-    setProducts((prev) => [newProd, ...prev]);
+    setProducts((prev) => {
+      const updated = [newProd, ...prev];
+      localStorage.setItem('nexainvest_products', JSON.stringify(updated));
+      return updated;
+    });
     addNotification(`Produk ${product.name} berhasil ditambahkan ke katalog.`, 'success');
   };
 
   const updateProduct = (product: InvestmentProduct) => {
-    setProducts((prev) => prev.map((p) => (p.id === product.id ? product : p)));
+    setProducts((prev) => {
+      const updated = prev.map((p) => (p.id === product.id ? product : p));
+      localStorage.setItem('nexainvest_products', JSON.stringify(updated));
+      return updated;
+    });
     addNotification(`Produk ${product.name} berhasil diperbarui.`, 'success');
   };
 
+  const deleteProduct = (productId: string) => {
+    setProducts((prev) => {
+      const updated = prev.filter((p) => p.id !== productId);
+      localStorage.setItem('nexainvest_products', JSON.stringify(updated));
+      return updated;
+    });
+    addNotification('Produk berhasil dihapus dari katalog.', 'info');
+  };
+
   const toggleProductStatus = (id: string) => {
-    setProducts((prev) =>
-      prev.map((p) =>
+    setProducts((prev) => {
+      const updated = prev.map((p) =>
         p.id === id ? { ...p, status: p.status === 'active' ? 'inactive' : 'active' } : p
-      )
-    );
+      );
+      localStorage.setItem('nexainvest_products', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const topUpUserBalanceAdmin = (amount: number) => {
@@ -829,6 +936,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider
       value={{
+        platformSettings,
+        updatePlatformSettings,
+        resetPlatformSettings,
         user,
         setUser,
         products,
@@ -862,6 +972,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         rejectTestimonial,
         addProduct,
         updateProduct,
+        deleteProduct,
         toggleProductStatus,
         topUpUserBalanceAdmin,
         triggerConfetti,

@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
   X,
+  ArrowLeft,
   QrCode,
   Building2,
   Wallet,
   Check,
-  Copy,
   Zap,
   Sparkles,
-  ArrowDownLeft,
   Clock,
   ShieldCheck,
   CheckCircle2,
   Loader2,
-  CreditCard,
   AlertCircle,
-  RefreshCw,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
@@ -26,20 +23,44 @@ interface DepositModalProps {
 }
 
 export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
-  const { requestDeposit, topUpUserBalanceAdmin, triggerConfetti, addNotification } = useApp();
+  const { platformSettings, topUpUserBalanceAdmin, triggerConfetti, addNotification } = useApp();
   const { theme } = useTheme();
 
-  const [selectedAmount, setSelectedAmount] = useState<number>(250000);
+  const [selectedAmount, setSelectedAmount] = useState<number>(100000);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [paymentType, setPaymentType] = useState<'AUTO_GATEWAY' | 'BANK' | 'EWALLET'>('AUTO_GATEWAY');
   const [autoGatewayMethod, setAutoGatewayMethod] = useState<'QRIS_1' | 'QRIS_2'>('QRIS_1');
-  const [copiedBankAcc, setCopiedBankAcc] = useState<string | null>(null);
 
   // Auto gateway step state
   const [gatewayStep, setGatewayStep] = useState<'SELECT' | 'PAYMENT_PENDING' | 'SUCCESS'>('SELECT');
   const [isProcessingGateway, setIsProcessingGateway] = useState<boolean>(false);
   const [countdownSeconds, setCountdownSeconds] = useState<number>(899); // 14m 59s
   const [createdRefNo, setCreatedRefNo] = useState<string>('');
+
+  // Handle mobile browser/hardware back button so it safely closes modal without restarting the SPA
+  useEffect(() => {
+    if (!isOpen) return;
+
+    window.history.pushState({ modal: 'deposit' }, '');
+
+    const handlePopState = () => {
+      handleResetModal();
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleResetModal();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     let timer: any;
@@ -53,28 +74,21 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
 
   if (!isOpen) return null;
 
-  const quickAmounts = [50000, 100000, 250000, 500000, 1000000, 2500000, 5000000];
+  const quickAmounts = platformSettings?.depositPresetAmounts?.length
+    ? platformSettings.depositPresetAmounts
+    : [50000, 100000, 250000, 500000, 1000000, 2500000, 5000000];
+
   const amountToDeposit = customAmount ? Number(customAmount) : selectedAmount;
-
-  const bankAccounts = [
-    { bank: 'BCA', name: 'PT NEXA CAPITAL TRADING', number: '8820-1948-21', color: 'bg-blue-600' },
-    { bank: 'Mandiri', name: 'PT NEXA CAPITAL TRADING', number: '1380-0092-111', color: 'bg-yellow-600' },
-    { bank: 'BRI', name: 'PT NEXA CAPITAL TRADING', number: '0021-0100-222-301', color: 'bg-blue-800' },
-  ];
-
-  const handleCopyAcc = (num: string) => {
-    navigator.clipboard.writeText(num);
-    setCopiedBankAcc(num);
-    setTimeout(() => setCopiedBankAcc(null), 2000);
-  };
+  const minDeposit = platformSettings?.minDeposit || 30000;
+  const maxDeposit = platformSettings?.maxDeposit || 50000000;
 
   const handleStartAutoGateway = () => {
-    if (amountToDeposit < 30000) {
-      alert('Minimal deposit adalah Rp 30.000');
+    if (amountToDeposit < minDeposit) {
+      alert(`Minimal deposit adalah Rp ${minDeposit.toLocaleString('id-ID')}`);
       return;
     }
-    if (amountToDeposit > 20000000) {
-      alert('Maksimal deposit adalah Rp 20.000.000 per transaksi');
+    if (amountToDeposit > maxDeposit) {
+      alert(`Maksimal deposit adalah Rp ${maxDeposit.toLocaleString('id-ID')} per transaksi`);
       return;
     }
 
@@ -112,14 +126,30 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  const currentQrisImage = autoGatewayMethod === 'QRIS_1'
+    ? platformSettings.qris1ImageUrl
+    : platformSettings.qris2ImageUrl;
+
+  const currentQrisName = autoGatewayMethod === 'QRIS_1'
+    ? platformSettings.qris1Name
+    : platformSettings.qris2Name;
+
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5 my-8 text-slate-900 dark:text-white relative animate-fadeIn">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-lg w-full p-5 sm:p-6 border-t sm:border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4 my-0 sm:my-8 text-slate-900 dark:text-white relative animate-fadeIn max-h-[92vh] sm:max-h-[90vh] overflow-y-auto">
         
-        {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        {/* Sticky Mobile Friendly Header */}
+        <div className="sticky -top-5 sm:-top-6 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-20 pb-3 pt-1 -mx-5 sm:-mx-6 px-5 sm:px-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
+            <button
+              onClick={handleResetModal}
+              className="p-2 -ml-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 transition-colors flex items-center justify-center active:scale-95 cursor-pointer"
+              title="Kembali"
+              aria-label="Kembali"
+            >
+              <ArrowLeft className="w-5 h-5 text-emerald-500" />
+            </button>
+            <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
               <Zap className="w-5 h-5 fill-current" />
             </div>
             <div>
@@ -129,14 +159,17 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                   QRIS 1 & QRIS 2
                 </span>
               </h3>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[10px] text-slate-400">
                 Layanan deposit 24 jam nonstop via QRIS 1 & QRIS 2
               </p>
             </div>
           </div>
+
           <button
             onClick={handleResetModal}
-            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-rose-500/20 text-slate-500 dark:text-slate-400 hover:text-rose-400 transition-all cursor-pointer active:scale-95"
+            title="Tutup Menu"
+            aria-label="Tutup"
           >
             <X className="w-5 h-5" />
           </button>
@@ -167,11 +200,12 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                 {quickAmounts.map((amt) => (
                   <button
                     key={amt}
+                    type="button"
                     onClick={() => {
                       setSelectedAmount(amt);
                       setCustomAmount('');
                     }}
-                    className={`py-2 px-2 rounded-xl text-xs font-extrabold border transition-all ${
+                    className={`py-2 px-2 rounded-xl text-xs font-extrabold border transition-all cursor-pointer ${
                       selectedAmount === amt && !customAmount
                         ? 'border-emerald-500 bg-emerald-500/15 text-emerald-400 shadow-sm scale-105'
                         : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -185,10 +219,10 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
               <div className="pt-1">
                 <input
                   type="number"
-                  placeholder="Atau masukkan nominal khusus (contoh: 150000)"
+                  placeholder={`Atau masukkan nominal khusus (Min Rp ${minDeposit.toLocaleString('id-ID')})`}
                   value={customAmount}
                   onChange={(e) => setCustomAmount(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500 transition-colors"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-white font-mono focus:outline-none focus:border-emerald-500 transition-colors font-bold"
                 />
               </div>
             </div>
@@ -201,10 +235,11 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
 
               <div className="grid grid-cols-3 gap-2">
                 <button
+                  type="button"
                   onClick={() => setPaymentType('AUTO_GATEWAY')}
-                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center space-y-1 transition-all ${
+                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center space-y-1 transition-all cursor-pointer ${
                     paymentType === 'AUTO_GATEWAY'
-                      ? 'border-emerald-500 bg-emerald-500/15 text-emerald-400 font-extrabold shadow-md'
+                      ? 'border-emerald-500 bg-emerald-500/15 text-emerald-400 font-extrabold shadow-md ring-1 ring-emerald-500/50'
                       : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400'
                   }`}
                 >
@@ -214,8 +249,9 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setPaymentType('BANK')}
-                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center space-y-1 transition-all ${
+                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center space-y-1 transition-all cursor-pointer ${
                     paymentType === 'BANK'
                       ? 'border-rose-500 bg-rose-500/15 text-rose-400 font-extrabold shadow-md'
                       : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400'
@@ -223,12 +259,15 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                 >
                   <Building2 className="w-5 h-5" />
                   <span className="text-xs">Transfer Bank</span>
-                  <span className="text-[9px] text-rose-400 font-bold bg-rose-500/20 px-1.5 py-0.5 rounded">MAINTENANCE</span>
+                  <span className="text-[9px] text-rose-400 font-bold bg-rose-500/20 px-1.5 py-0.5 rounded">
+                    {platformSettings.bankTransferEnabled ? 'AKTIF' : 'MAINTENANCE'}
+                  </span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => setPaymentType('EWALLET')}
-                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center space-y-1 transition-all ${
+                  className={`p-3 rounded-2xl border flex flex-col items-center justify-center space-y-1 transition-all cursor-pointer ${
                     paymentType === 'EWALLET'
                       ? 'border-rose-500 bg-rose-500/15 text-rose-400 font-extrabold shadow-md'
                       : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400'
@@ -236,7 +275,9 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                 >
                   <Wallet className="w-5 h-5" />
                   <span className="text-xs">E-Wallet Direct</span>
-                  <span className="text-[9px] text-rose-400 font-bold bg-rose-500/20 px-1.5 py-0.5 rounded">MAINTENANCE</span>
+                  <span className="text-[9px] text-rose-400 font-bold bg-rose-500/20 px-1.5 py-0.5 rounded">
+                    {platformSettings.ewalletDirectEnabled ? 'AKTIF' : 'MAINTENANCE'}
+                  </span>
                 </button>
               </div>
             </div>
@@ -254,14 +295,14 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
 
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   {[
-                    { id: 'QRIS_1', label: 'QRIS 1 (Utama 24 Jam)', detail: 'BCA, DANA, OVO, ShopeePay, Mandiri' },
-                    { id: 'QRIS_2', label: 'QRIS 2 (Backup 24 Jam)', detail: 'Semua Aplikasi e-Wallet & m-Banking' },
+                    { id: 'QRIS_1', label: platformSettings.qris1Name || 'QRIS 1 (Utama 24 Jam)', detail: platformSettings.qris1Detail || 'BCA, DANA, OVO, ShopeePay, Mandiri' },
+                    { id: 'QRIS_2', label: platformSettings.qris2Name || 'QRIS 2 (Backup 24 Jam)', detail: platformSettings.qris2Detail || 'Semua Aplikasi e-Wallet & m-Banking' },
                   ].map((item) => (
                     <button
                       key={item.id}
                       type="button"
                       onClick={() => setAutoGatewayMethod(item.id as any)}
-                      className={`p-3 rounded-xl border text-left transition-all ${
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                         autoGatewayMethod === item.id
                           ? 'border-emerald-500 bg-emerald-950/60 text-white font-bold ring-1 ring-emerald-500'
                           : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-200'
@@ -283,48 +324,50 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
               </div>
             )}
 
-            {/* MAINTENANCE NOTICE FOR BANK */}
+            {/* MAINTENANCE NOTICE OR BANK ACCOUNTS */}
             {paymentType === 'BANK' && (
-              <div className="p-4 bg-slate-950 rounded-2xl border border-rose-500/30 text-xs text-center space-y-2">
+              <div className="p-4 bg-slate-950 rounded-2xl border border-rose-500/30 text-xs text-center space-y-3">
                 <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
                   <AlertCircle className="w-6 h-6" />
                 </div>
                 <h4 className="font-bold text-white text-sm">Metode Bank Lain Sedang Maintenance</h4>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
-                  Jalur Transfer Rekening Bank saat ini sedang <strong>MAINTENANCE SEMENTARA</strong>. Silakan gunakan jalur <strong>QRIS 1</strong> atau <strong>QRIS 2</strong> yang siap melayani deposit 24 jam nonstop.
+                  {platformSettings.bankMaintenanceMessage ||
+                    'Jalur Transfer Rekening Bank saat ini sedang MAINTENANCE SEMENTARA. Silakan gunakan jalur QRIS 1 atau QRIS 2 yang siap melayani deposit 24 jam nonstop.'}
                 </p>
                 <button
                   type="button"
                   onClick={() => setPaymentType('AUTO_GATEWAY')}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all"
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-md"
                 >
                   Gunakan Jalur QRIS 1 & QRIS 2 (24 Jam)
                 </button>
               </div>
             )}
 
-            {/* MAINTENANCE NOTICE FOR EWALLET DIRECT */}
+            {/* MAINTENANCE NOTICE OR EWALLET DIRECT */}
             {paymentType === 'EWALLET' && (
-              <div className="p-4 bg-slate-950 rounded-2xl border border-rose-500/30 text-xs text-center space-y-2">
+              <div className="p-4 bg-slate-950 rounded-2xl border border-rose-500/30 text-xs text-center space-y-3">
                 <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
                   <AlertCircle className="w-6 h-6" />
                 </div>
                 <h4 className="font-bold text-white text-sm">Metode E-Wallet Direct Sedang Maintenance</h4>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
-                  Jalur Transfer E-Wallet langsung saat ini sedang <strong>MAINTENANCE SEMENTARA</strong>. Silakan scan melalui <strong>QRIS 1</strong> atau <strong>QRIS 2</strong> menggunakan aplikasi DANA, GoPay, OVO, ShopeePay Anda (Aktif 24 jam).
+                  {platformSettings.ewalletMaintenanceMessage ||
+                    'Jalur Transfer E-Wallet langsung saat ini sedang MAINTENANCE SEMENTARA. Silakan scan melalui QRIS 1 atau QRIS 2 menggunakan aplikasi DANA, GoPay, OVO, ShopeePay Anda (Aktif 24 jam).'}
                 </p>
                 <button
                   type="button"
                   onClick={() => setPaymentType('AUTO_GATEWAY')}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all"
+                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-md"
                 >
                   Gunakan Jalur QRIS 1 & QRIS 2 (24 Jam)
                 </button>
               </div>
             )}
 
-            {/* SUBMIT BUTTON */}
-            <div className="pt-2">
+            {/* SUBMIT & CANCEL BUTTONS */}
+            <div className="space-y-2 pt-1">
               <button
                 type="button"
                 onClick={() => {
@@ -333,13 +376,21 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                   } else {
                     topUpUserBalanceAdmin(amountToDeposit);
                     addNotification(`Deposit Rp ${amountToDeposit.toLocaleString('id-ID')} berhasil dibuat.`, 'info');
-                    onClose();
+                    handleResetModal();
                   }
                 }}
-                className="w-full py-3.5 rounded-2xl font-black text-xs text-slate-950 shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 hover:from-emerald-300 hover:to-teal-300"
+                className="w-full py-3.5 rounded-2xl font-black text-xs text-slate-950 shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 hover:from-emerald-300 hover:to-teal-300 cursor-pointer"
               >
                 <Zap className="w-4 h-4 fill-current text-slate-950" />
                 <span>LANJUTKAN DEPOSIT OTOMATIS RP {amountToDeposit.toLocaleString('id-ID')}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetModal}
+                className="w-full py-2.5 rounded-xl font-bold text-xs text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-all text-center cursor-pointer"
+              >
+                Batal & Kembali ke Menu Utama
               </button>
             </div>
           </>
@@ -357,37 +408,22 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                 </span>
               </div>
 
-              {/* QR Code or VA Box */}
-              {autoGatewayMethod === 'QRIS' || autoGatewayMethod === 'GOPAY' ? (
-                <div className="space-y-2">
-                  <span className="text-xs text-slate-300 block font-bold">
-                    Scan Kode QRIS Otomatis dengan m-Banking / E-Wallet:
-                  </span>
-                  <div className="w-44 h-44 bg-white p-2 rounded-2xl mx-auto flex items-center justify-center shadow-lg border border-slate-700">
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=NEXA_AUTO_PAYMENT_${createdRefNo}`}
-                      alt="QRIS Payment Gateway"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
+              {/* QR Code Dynamic Box */}
+              <div className="space-y-2">
+                <span className="text-xs text-slate-300 block font-bold">
+                  Scan Barcode {currentQrisName}:
+                </span>
+                <div className="w-48 h-48 bg-white p-2 rounded-2xl mx-auto flex items-center justify-center shadow-lg border border-slate-700">
+                  <img
+                    src={currentQrisImage}
+                    alt={currentQrisName}
+                    className="w-full h-full object-contain"
+                  />
                 </div>
-              ) : (
-                <div className="space-y-2 py-2">
-                  <span className="text-xs text-slate-300 block font-bold">
-                    Nomor Virtual Account Otomatis ({autoGatewayMethod.replace('VA_', '')}):
-                  </span>
-                  <div className="p-3 bg-slate-900 border border-emerald-500/40 rounded-xl flex items-center justify-between font-mono font-black text-lg text-emerald-400">
-                    <span>8820-9912-{createdRefNo.slice(-4)}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleCopyAcc(`88209912${createdRefNo.slice(-4)}`)}
-                      className="text-xs font-sans font-bold text-slate-300 bg-slate-800 px-2.5 py-1 rounded-lg hover:text-white"
-                    >
-                      {copiedBankAcc ? 'Tersalin!' : 'Salin VA'}
-                    </button>
-                  </div>
-                </div>
-              )}
+                <span className="text-[10px] text-emerald-400 font-bold block">
+                  Support BCA, Mandiri, BRI, BNI, DANA, OVO, GoPay, ShopeePay & Semua Bank
+                </span>
+              </div>
 
               <div className="p-3 bg-slate-900 rounded-xl text-left text-xs space-y-1">
                 <div className="flex justify-between">
@@ -395,8 +431,8 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                   <span className="font-black text-emerald-400">Rp {amountToDeposit.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-500">Metode Gateway:</span>
-                  <span className="text-slate-300 font-bold">{autoGatewayMethod}</span>
+                  <span className="text-slate-500">Jalur Terpilih:</span>
+                  <span className="text-slate-300 font-bold">{currentQrisName}</span>
                 </div>
               </div>
             </div>
@@ -407,7 +443,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                 type="button"
                 disabled={isProcessingGateway}
                 onClick={handleSimulatePaymentCallback}
-                className="w-full py-3.5 rounded-2xl font-black text-xs text-slate-950 shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-2 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50"
+                className="w-full py-3.5 rounded-2xl font-black text-xs text-slate-950 shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-2 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 cursor-pointer"
               >
                 {isProcessingGateway ? (
                   <>
@@ -417,7 +453,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                 ) : (
                   <>
                     <Zap className="w-4 h-4 fill-current text-slate-950" />
-                    <span>PROSES PEMBAYARAN OTOMATIS (TES INSTAN)</span>
+                    <span>KONFIRMASI SUDAH BAYAR / CEK STATUS</span>
                   </>
                 )}
               </button>
@@ -425,7 +461,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
               <button
                 type="button"
                 onClick={() => setGatewayStep('SELECT')}
-                className="w-full py-2.5 rounded-xl font-bold text-xs text-slate-400 hover:text-white transition-colors"
+                className="w-full py-2.5 rounded-xl font-bold text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
               >
                 Kembali & Ubah Metode
               </button>
@@ -461,7 +497,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
             <button
               type="button"
               onClick={handleResetModal}
-              className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all active:scale-95"
+              className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all active:scale-95 cursor-pointer"
             >
               SELESAI & CEK SALDO
             </button>

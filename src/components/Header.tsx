@@ -104,6 +104,19 @@ export const Header: React.FC<HeaderProps> = ({
                   </button>
                 );
               })}
+
+              {isAdminMode && (
+                <button
+                  onClick={() => {
+                    window.history.pushState({}, '', '/admin');
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-xs font-black bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center space-x-1.5 shadow-sm transition-all"
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>Portal Admin (/admin)</span>
+                </button>
+              )}
             </nav>
 
             {/* Right Section: Balance, User Profile, Security Center, Notifications */}
@@ -310,6 +323,20 @@ export const Header: React.FC<HeaderProps> = ({
                   {item.label}
                 </button>
               ))}
+
+              {isAdminMode && (
+                <button
+                  onClick={() => {
+                    setShowMobileMenu(false);
+                    window.history.pushState({}, '', '/admin');
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }}
+                  className="w-full text-left px-3 py-2.5 rounded-xl text-xs font-black bg-amber-500 text-slate-950 flex items-center space-x-2 shadow-sm"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>Buka Portal Admin (/admin)</span>
+                </button>
+              )}
             </div>
 
             {/* Telegram CS & Channel Links */}

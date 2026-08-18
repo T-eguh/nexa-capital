@@ -143,6 +143,13 @@ export interface ThemePreset {
   brandIcon: string; // Lucide icon identifier
 }
 
+export interface BankAccountInfo {
+  bank: string;
+  number: string;
+  name: string;
+  color?: string;
+}
+
 export interface AppThemeConfig {
   presetId: string;
   brandName: string;
@@ -155,4 +162,73 @@ export interface AppThemeConfig {
   supportTelegram: string;
   telegramChannel?: string;
   currencySymbol: string;
+}
+
+export interface PlatformSettings {
+  // Brand & Identity
+  appName: string;
+  brandTagline: string;
+  logoUrl?: string;
+  supportTelegram: string;
+  supportTelegramUsername: string; // e.g. "CSnexacapital"
+  telegramChannel: string; // e.g. "nexacapitalcom"
+  supportWhatsapp: string;
+  runningText: string;
+
+  // Welcome Modal Config
+  welcomeModalEnabled: boolean;
+  welcomeModalTitle: string;
+  welcomeModalSubtitle: string;
+  welcomeBadge1: string;
+  welcomeBadge2: string;
+  welcomeSecurityText: string;
+
+  // Deposit Config
+  deposit24HoursEnabled: boolean;
+  minDeposit: number;
+  maxDeposit: number;
+  depositPresetAmounts: number[];
+  
+  // Channels Config
+  qris1Enabled: boolean;
+  qris1Name: string;
+  qris1Detail: string;
+  qris1ImageUrl: string;
+  
+  qris2Enabled: boolean;
+  qris2Name: string;
+  qris2Detail: string;
+  qris2ImageUrl: string;
+  
+  bankTransferEnabled: boolean; // if false, shows maintenance
+  bankMaintenanceMessage: string;
+  bankAccounts: BankAccountInfo[];
+  
+  ewalletDirectEnabled: boolean; // if false, shows maintenance
+  ewalletMaintenanceMessage: string;
+  ewalletNumber: string;
+  ewalletHolder: string;
+
+  // Withdrawal Config
+  withdrawalEnabled: boolean;
+  withdrawalOpenHour: number; // 9
+  withdrawalCloseHour: number; // 17
+  withdrawalTimezone: string; // 'WIB'
+  withdrawalDailyLimitCount: number; // 1 (1x per day)
+  minWithdrawal: number; // 50000
+  maxWithdrawal: number; // 10000000
+  withdrawalFeePct: number; // 0%
+  withdrawalEwalletEnabled: boolean;
+  withdrawalBankEnabled: boolean; // false / maintenance
+  withdrawalBankMaintenanceMessage: string;
+  
+  // Referral & Commission Config
+  referralLvl1Pct: number; // 32
+  referralLvl2Pct: number; // 2
+  referralLvl3Pct: number; // 1
+  referralAutoToWithdrawalBalance: boolean; // true
+
+  // System General
+  isMaintenanceMode: boolean;
+  maintenanceMessage: string;
 }

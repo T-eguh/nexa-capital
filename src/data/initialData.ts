@@ -1,4 +1,77 @@
-import { InvestmentProduct, UserProfile, Transaction, UserInvestment, ThemePreset, AppThemeConfig, DownlineUser, Testimonial } from '../types';
+import { InvestmentProduct, UserProfile, Transaction, UserInvestment, ThemePreset, AppThemeConfig, PlatformSettings, DownlineUser, Testimonial } from '../types';
+
+export const INITIAL_PLATFORM_SETTINGS: PlatformSettings = {
+  // Brand & Identity
+  appName: 'NEXA CAPITAL',
+  brandTagline: 'Platform Investasi & Trading Saham AI Dividen Harian Terpercaya',
+  logoUrl: '',
+  supportTelegram: 'https://t.me/CSnexacapital',
+  supportTelegramUsername: 'CSnexacapital',
+  telegramChannel: 'https://t.me/nexacapitalcom',
+  supportWhatsapp: '+6281234567890',
+  runningText: '🔥 Selamat Datang di NEXA CAPITAL SMART MARKET! Dividen Harian Otomatis Berjalan 24 Jam • Deposit Otomatis QRIS 1 & QRIS 2 Nonstop • Penarikan Operasional 09:00 - 17:00 WIB • Bonus Referral 3-Level Langsung Masuk Saldo Penarikan!',
+
+  // Welcome Modal Config
+  welcomeModalEnabled: true,
+  welcomeModalTitle: 'Selamat datang',
+  welcomeModalSubtitle: 'Robot trading AI & pasar saham NEXA CAPITAL siap jalan. Mulai investasi dari pasar produk.',
+  welcomeBadge1: 'OJK Terdaftar',
+  welcomeBadge2: 'Bappebti Diawasi',
+  welcomeSecurityText: 'Data terenkripsi · transaksi dipantau 24/7',
+
+  // Deposit Config
+  deposit24HoursEnabled: true,
+  minDeposit: 30000,
+  maxDeposit: 50000000,
+  depositPresetAmounts: [50000, 100000, 250000, 500000, 1000000, 2500000, 5000000],
+  
+  // Channels Config
+  qris1Enabled: true,
+  qris1Name: 'QRIS 1 (Utama 24 Jam)',
+  qris1Detail: 'BCA, DANA, OVO, ShopeePay, Mandiri & Semua Bank',
+  qris1ImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=00020101021126570014ID.LINKAJA.WWW01189360091438201948215204581253033605802ID5920NEXA+CAPITAL+QRIS16007JAKARTA61051234062070703A0163048B92',
+  
+  qris2Enabled: true,
+  qris2Name: 'QRIS 2 (Backup 24 Jam)',
+  qris2Detail: 'Semua Aplikasi e-Wallet & m-Banking Nasional',
+  qris2ImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=00020101021126570014ID.LINKAJA.WWW01189360091438201948225204581253033605802ID5920NEXA+CAPITAL+QRIS26007JAKARTA61051234062070703A0263044C73',
+  
+  bankTransferEnabled: false,
+  bankMaintenanceMessage: 'Jalur Transfer Rekening Bank saat ini sedang MAINTENANCE SEMENTARA. Silakan gunakan jalur QRIS 1 atau QRIS 2 yang siap melayani deposit 24 jam nonstop.',
+  bankAccounts: [
+    { bank: 'BCA', name: 'PT NEXA CAPITAL TRADING', number: '8820-1948-21', color: 'bg-blue-600' },
+    { bank: 'Mandiri', name: 'PT NEXA CAPITAL TRADING', number: '1380-0092-111', color: 'bg-yellow-600' },
+    { bank: 'BRI', name: 'PT NEXA CAPITAL TRADING', number: '0021-0100-222-301', color: 'bg-blue-800' },
+  ],
+  
+  ewalletDirectEnabled: false,
+  ewalletMaintenanceMessage: 'Jalur Transfer E-Wallet langsung saat ini sedang MAINTENANCE SEMENTARA. Silakan scan melalui QRIS 1 atau QRIS 2 menggunakan aplikasi DANA, GoPay, OVO, ShopeePay Anda (Aktif 24 jam).',
+  ewalletNumber: '0812-9876-5432',
+  ewalletHolder: 'NEXA OFFICIAL TREASURY',
+
+  // Withdrawal Config
+  withdrawalEnabled: true,
+  withdrawalOpenHour: 9,
+  withdrawalCloseHour: 17,
+  withdrawalTimezone: 'WIB',
+  withdrawalDailyLimitCount: 1,
+  minWithdrawal: 50000,
+  maxWithdrawal: 10000000,
+  withdrawalFeePct: 0,
+  withdrawalEwalletEnabled: true,
+  withdrawalBankEnabled: false,
+  withdrawalBankMaintenanceMessage: 'Penarikan melalui rekening bank saat ini sedang MAINTENANCE SEMENTARA. Penarikan saat ini HANYA BISA MELALUI E-WALLET (DANA, GoPay, OVO, ShopeePay).',
+  
+  // Referral & Commission Config
+  referralLvl1Pct: 32,
+  referralLvl2Pct: 2,
+  referralLvl3Pct: 1,
+  referralAutoToWithdrawalBalance: true,
+
+  // System General
+  isMaintenanceMode: false,
+  maintenanceMessage: 'Platform sedang dalam peningkatan sistem rutin. Layanan akan kembali normal dalam beberapa saat.',
+};
 
 export const INITIAL_THEME_PRESETS: ThemePreset[] = [
   {

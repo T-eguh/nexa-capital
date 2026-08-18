@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, ShieldCheck, Zap, ArrowUpRight, Send, TrendingUp, Shield, Users } from 'lucide-react';
 import { NexaCapitalLogo } from './NexaCapitalLogo';
+import { useApp } from '../context/AppContext';
 
 interface WelcomeModalProps {
   isOpen: boolean;
@@ -13,7 +14,15 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   onClose,
   onOpenMarket,
 }) => {
+  const { platformSettings } = useApp();
   if (!isOpen) return null;
+
+  const appName = platformSettings?.appName || 'NEXA CAPITAL';
+  const title = platformSettings?.welcomeModalTitle || 'Selamat datang';
+  const subtitle = platformSettings?.welcomeModalSubtitle || 'Robot trading AI & pasar saham NEXA CAPITAL siap jalan. Mulai investasi dari pasar produk.';
+  const securityText = platformSettings?.welcomeSecurityText || 'Data terenkripsi · transaksi dipantau 24/7';
+  const tgCs = platformSettings?.supportTelegram || 'https://t.me/CSnexacapital';
+  const tgChannel = platformSettings?.telegramChannel || 'https://t.me/nexacapitalcom';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
@@ -22,7 +31,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
         <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
           <div className="flex items-center space-x-1.5 text-emerald-400 font-extrabold text-xs uppercase tracking-wider">
             <Zap className="w-4 h-4 fill-emerald-400" />
-            <span>NEXA CAPITAL SMART MARKET</span>
+            <span>{appName} SMART MARKET</span>
           </div>
 
           <button
@@ -40,9 +49,9 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
             <NexaCapitalLogo size="sm" showText={false} />
           </div>
           <div>
-            <h2 className="text-xl font-black text-white tracking-tight">Selamat datang</h2>
+            <h2 className="text-xl font-black text-white tracking-tight">{title}</h2>
             <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
-              Robot trading AI & pasar saham NEXA CAPITAL siap jalan. Mulai investasi dari pasar produk.
+              {subtitle}
             </p>
           </div>
         </div>
@@ -77,7 +86,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
           </div>
           <div>
             <p className="text-xs font-extrabold text-white">Aman & terverifikasi</p>
-            <p className="text-[11px] text-slate-400">Data terenkripsi · transaksi dipantau 24/7</p>
+            <p className="text-[11px] text-slate-400">{securityText}</p>
           </div>
         </div>
 
@@ -98,29 +107,29 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
 
           {/* 2. CS Telegram */}
           <a
-            href="https://t.me/CSnexacapital"
+            href={tgCs}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full py-3 px-4 rounded-2xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-300 font-bold text-xs transition-all flex items-center justify-center space-x-2 cursor-pointer"
           >
             <Send className="w-4 h-4 text-cyan-400" />
-            <span>CS Telegram (@CSnexacapital)</span>
+            <span>CS Telegram Resmi</span>
           </a>
 
           {/* 3. Saluran Telegram */}
           <a
-            href="https://t.me/nexacapitalcom"
+            href={tgChannel}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full py-3 px-4 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold text-xs shadow-md transition-all flex items-center justify-center space-x-2 cursor-pointer"
           >
             <Send className="w-4 h-4 fill-slate-950 text-sky-500" />
-            <span>Saluran Telegram</span>
+            <span>Saluran Telegram Komunitas</span>
           </a>
 
           {/* 4. Customer Support (Pusat Bantuan) */}
           <a
-            href="https://t.me/CSnexacapital"
+            href={tgCs}
             target="_blank"
             rel="noopener noreferrer"
             className="w-full py-2.5 px-4 rounded-2xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 font-bold text-xs transition-all flex items-center justify-center space-x-2 cursor-pointer"

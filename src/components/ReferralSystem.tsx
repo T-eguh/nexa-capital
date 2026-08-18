@@ -18,8 +18,12 @@ import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 
 export const ReferralSystem: React.FC = () => {
-  const { user, downlines, addNotification } = useApp();
+  const { user, downlines, addNotification, platformSettings } = useApp();
   const { theme } = useTheme();
+
+  const lvl1 = platformSettings?.referralLvl1Pct ?? 32;
+  const lvl2 = platformSettings?.referralLvl2Pct ?? 2;
+  const lvl3 = platformSettings?.referralLvl3Pct ?? 1;
 
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -68,11 +72,11 @@ export const ReferralSystem: React.FC = () => {
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Program Referral 3-Level (32% + 2% + 1%)
+            Program Referral 3-Level ({lvl1}% + {lvl2}% + {lvl3}%)
           </h1>
 
           <p className="text-slate-200 text-xs sm:text-sm leading-relaxed">
-            Dapatkan komisi investasi berjenjang dari setiap anggota tim Anda! Komisi diproses secara transparan dan dikonfirmasi melalui Admin Panel.
+            Dapatkan komisi investasi berjenjang dari setiap anggota tim Anda! Komisi diproses secara transparan dan otomatis dikreditkan ke Saldo Penarikan.
           </p>
         </div>
       </div>
@@ -87,14 +91,14 @@ export const ReferralSystem: React.FC = () => {
               <span>Level 1 (Direct)</span>
             </span>
             <span className="px-3 py-1 bg-amber-400 text-slate-950 font-black text-xs rounded-full shadow-sm">
-              32% Komisi
+              {lvl1}% Komisi
             </span>
           </div>
           <p className="text-xs text-slate-800 dark:text-slate-100 font-semibold mt-2 leading-relaxed">
             Anggota yang mendaftar langsung menggunakan link/kode referral Anda.
           </p>
           <div className="mt-3 p-3 bg-amber-400/15 border border-amber-400/40 rounded-xl text-xs font-extrabold text-amber-900 dark:text-amber-300">
-            Simulasi: Beli Produk 50k &rarr; Komisi <strong className="text-amber-700 dark:text-amber-200 text-sm">Rp 16.000</strong>
+            Simulasi: Beli Produk 50k &rarr; Komisi <strong className="text-amber-700 dark:text-amber-200 text-sm">Rp {Math.round(50000 * (lvl1 / 100)).toLocaleString('id-ID')}</strong>
           </div>
         </div>
 
@@ -106,14 +110,14 @@ export const ReferralSystem: React.FC = () => {
               <span>Level 2 (Indirect)</span>
             </span>
             <span className="px-3 py-1 bg-blue-500 text-white font-black text-xs rounded-full shadow-sm">
-              2% Komisi
+              {lvl2}% Komisi
             </span>
           </div>
           <p className="text-xs text-slate-800 dark:text-slate-100 font-semibold mt-2 leading-relaxed">
             Anggota yang diundang oleh bawahan Level 1 Anda.
           </p>
           <div className="mt-3 p-3 bg-blue-400/15 border border-blue-400/40 rounded-xl text-xs font-extrabold text-blue-900 dark:text-blue-300">
-            Simulasi: Beli Produk 50k &rarr; Komisi <strong className="text-blue-700 dark:text-blue-200 text-sm">Rp 1.000</strong>
+            Simulasi: Beli Produk 50k &rarr; Komisi <strong className="text-blue-700 dark:text-blue-200 text-sm">Rp {Math.round(50000 * (lvl2 / 100)).toLocaleString('id-ID')}</strong>
           </div>
         </div>
 
@@ -125,14 +129,14 @@ export const ReferralSystem: React.FC = () => {
               <span>Level 3 (Sub-Indirect)</span>
             </span>
             <span className="px-3 py-1 bg-purple-500 text-white font-black text-xs rounded-full shadow-sm">
-              1% Komisi
+              {lvl3}% Komisi
             </span>
           </div>
           <p className="text-xs text-slate-800 dark:text-slate-100 font-semibold mt-2 leading-relaxed">
             Anggota yang diundang oleh bawahan Level 2 Anda.
           </p>
           <div className="mt-3 p-3 bg-purple-400/15 border border-purple-400/40 rounded-xl text-xs font-extrabold text-purple-900 dark:text-purple-300">
-            Simulasi: Beli Produk 50k &rarr; Komisi <strong className="text-purple-700 dark:text-purple-200 text-sm">Rp 500</strong>
+            Simulasi: Beli Produk 50k &rarr; Komisi <strong className="text-purple-700 dark:text-purple-200 text-sm">Rp {Math.round(50000 * (lvl3 / 100)).toLocaleString('id-ID')}</strong>
           </div>
         </div>
       </div>

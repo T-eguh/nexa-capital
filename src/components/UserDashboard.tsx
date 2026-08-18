@@ -141,23 +141,16 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           <div className="flex flex-col sm:flex-row gap-2.5">
             <button
               onClick={openDepositModal}
-              className="px-4 py-2.5 bg-gradient-to-r from-emerald-400 to-teal-400 text-slate-950 hover:from-emerald-300 hover:to-teal-300 rounded-xl font-black text-xs shadow-lg shadow-emerald-500/20 transition-transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-1.5"
+              className="px-5 py-2.5 bg-white text-slate-900 hover:bg-slate-100 rounded-xl font-extrabold text-xs shadow-md transition-transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-1.5 cursor-pointer"
             >
-              <Zap className="w-4 h-4 fill-current text-slate-950" />
-              <span>Tes Payment Gateway Otomatis</span>
-            </button>
-            <button
-              onClick={openDepositModal}
-              className="px-4 py-2.5 bg-white text-slate-900 hover:bg-slate-100 rounded-xl font-bold text-xs shadow-md transition-transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-1.5"
-            >
-              <ArrowDownLeft className="w-4 h-4 text-blue-600" />
-              <span>Deposit Manual</span>
+              <ArrowDownLeft className="w-4 h-4 text-emerald-600 font-bold" />
+              <span>Deposit Saldo</span>
             </button>
             <button
               onClick={openWithdrawModal}
-              className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl font-bold text-xs shadow-md transition-transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-1.5"
+              className="px-5 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 rounded-xl font-extrabold text-xs shadow-md transition-transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-1.5 cursor-pointer"
             >
-              <ArrowUpRight className="w-4 h-4" />
+              <ArrowUpRight className="w-4 h-4 text-slate-950 font-bold" />
               <span>Tarik Saldo</span>
             </button>
           </div>
