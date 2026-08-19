@@ -28,7 +28,8 @@ export const ReferralSystem: React.FC = () => {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const referralLink = `https://capitalwavee.com/r/${user.referralCode}`;
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://nexacapital.web.id';
+  const referralLink = `${baseUrl}/?ref=${user.referralCode}`;
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(user.referralCode);

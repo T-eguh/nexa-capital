@@ -1,48 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Users,
-  DollarSign,
   TrendingUp,
   ArrowDownLeft,
   ArrowUpRight,
   Clock,
   ShieldCheck,
-  AlertCircle,
   Activity,
   CheckCircle2,
   XCircle,
-  RefreshCw
+  CreditCard,
+  Briefcase,
 } from 'lucide-react';
+import { useApp } from '../../context/AppContext';
 
 export const AdminDashboardOverview: React.FC = () => {
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-      const res = await fetch('/api/admin/dashboard', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        setStats(data.stats);
-      }
-    } catch (err) {
-      console.error('Gagal memuat dashboard stats:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  const { registeredUsers, transactions, userInvestments, products, platformSettings } = useApp();
 
   const formatRupiah = (val: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
   };
+
+  // Calculations
+  const depositTransactions = transactions.filter((t) => t.type === 'DEPOSIT');
+  const withdrawalTransactions = transactions.filter((t) => t.type === 'WITHDRAWAL');
+
+  const totalDepositVolume = depositTransactions
+    .filter((d) => d.status === 'APPROVED' || d.status === 'SUCCESS')
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const totalWithdrawalVolume = withdrawalTransactions
+    .filter((w) => w.status === 'APPROVED' || w.status === 'SUCCESS')
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const pendingDeposits = depositTransactions.filter((d) => d.status === 'PENDING');
+  const pendingWithdrawals = withdrawalTransactions.filter((w) => w.status === 'PENDING');
+
+  const totalPortfolioInvested = userInvestments
+    .filter((i) => i.status === 'ACTIVE')
+    .reduce((acc, curr) => acc + curr.amount, 0);
+
+  const activeInvestmentsCount = userInvestments.filter((i) => i.status === 'ACTIVE').length;
 
   return (
     <div className="space-y-6">
@@ -51,22 +49,20 @@ export const AdminDashboardOverview: React.FC = () => {
         <div>
           <div className="flex items-center space-x-2 text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">
             <Activity className="w-4 h-4 animate-pulse" />
-            <span>Pusat Kendali Eksekutif</span>
+            <span>Pusat Kendali Eksekutif NEXA CAPITAL</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-white">Ringkasan Kinerja Platform</h2>
           <p className="text-xs text-slate-400 mt-1">
-            Monitoring arus kas, antrean deposit, penarikan, dan portofolio investasi secara real-time.
+            Monitoring langsung arus kas, antrean verifikasi deposit, pencairan dana, dan portofolio member.
           </p>
         </div>
 
-        <button
-          onClick={fetchDashboardData}
-          disabled={loading}
-          className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-white transition-all flex items-center space-x-2 shrink-0"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-          <span>Segarkan Data</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-1.5">
+            <ShieldCheck className="w-4 h-4" />
+            <span>Sistem Operasional Aktif</span>
+          </div>
+        </div>
       </div>
 
       {/* KPI Cards Grid */}
@@ -74,55 +70,57 @@ export const AdminDashboardOverview: React.FC = () => {
         {/* Total Deposits */}
         <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider">Volume Deposit</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Volume Deposit Disetujui</span>
             <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
               <ArrowDownLeft className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-white">{formatRupiah(stats?.totalDepositVolume || 300000)}</p>
+          <p className="text-2xl font-black text-white">{formatRupiah(totalDepositVolume)}</p>
           <p className="text-[11px] text-emerald-400 font-semibold mt-1 flex items-center space-x-1">
             <TrendingUp className="w-3 h-3" />
-            <span>+18.5% dari bulan lalu</span>
+            <span>{depositTransactions.filter((d) => d.status === 'APPROVED').length} Transaksi Berhasil</span>
           </p>
         </div>
 
         {/* Total Withdrawals */}
         <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider">Volume Penarikan</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Volume Penarikan Sukses</span>
             <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400">
               <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-white">{formatRupiah(stats?.totalWithdrawalVolume || 0)}</p>
-          <p className="text-[11px] text-slate-400 font-semibold mt-1">Saldo penarikan diproses</p>
+          <p className="text-2xl font-black text-white">{formatRupiah(totalWithdrawalVolume)}</p>
+          <p className="text-[11px] text-slate-400 font-semibold mt-1">
+            {withdrawalTransactions.filter((w) => w.status === 'APPROVED').length} Pencairan Selesai
+          </p>
         </div>
 
         {/* Total Invested */}
         <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider">Dana Portofolio Saham</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Dana Portofolio Aktif</span>
             <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
-              <TrendingUp className="w-4 h-4" />
+              <Briefcase className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-white">{formatRupiah(stats?.totalInvestmentsVolume || 250000)}</p>
+          <p className="text-2xl font-black text-white">{formatRupiah(totalPortfolioInvested)}</p>
           <p className="text-[11px] text-amber-400 font-semibold mt-1">
-            {stats?.activeInvestmentsCount || 2} Paket Aktif Berjalan
+            {activeInvestmentsCount} Paket Sedang Berjalan
           </p>
         </div>
 
         {/* Total Users */}
         <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 hover:border-slate-700 transition-all">
           <div className="flex items-center justify-between text-slate-400 mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider">Total Investor Aktif</span>
+            <span className="text-xs font-bold uppercase tracking-wider">Total Investor Terdaftar</span>
             <div className="p-2 rounded-xl bg-sky-500/10 text-sky-400">
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-black text-white">{stats?.totalUsers || 3} Pengguna</p>
+          <p className="text-2xl font-black text-white">{registeredUsers.length} Pengguna</p>
           <p className="text-[11px] text-sky-400 font-semibold mt-1">
-            +{stats?.newUsersToday || 1} Pendaftaran Hari Ini
+            Semua Akun Terverifikasi
           </p>
         </div>
       </div>
@@ -136,85 +134,101 @@ export const AdminDashboardOverview: React.FC = () => {
             </div>
             <div>
               <p className="text-xs font-bold text-amber-300">Antrean Deposit Pending</p>
-              <p className="text-lg font-black text-white">{stats?.pendingDepositsCount || 0} Permintaan</p>
+              <p className="text-lg font-black text-white">{pendingDeposits.length} Permintaan</p>
             </div>
           </div>
-          <span className="text-xs font-bold text-amber-400 underline cursor-pointer">Tinjau</span>
+          {pendingDeposits.length > 0 && (
+            <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold animate-pulse">
+              Perlu Tindakan
+            </span>
+          )}
         </div>
 
-        <div className="p-4 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-between">
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-sky-500 text-slate-950 font-black">
-              <ArrowUpRight className="w-5 h-5" />
+            <div className="p-2.5 rounded-xl bg-rose-500 text-slate-950 font-black">
+              <CreditCard className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold text-sky-300">Antrean Penarikan Pending</p>
-              <p className="text-lg font-black text-white">{stats?.pendingWithdrawalsCount || 0} Permintaan</p>
+              <p className="text-xs font-bold text-rose-300">Antrean Penarikan Pending</p>
+              <p className="text-lg font-black text-white">{pendingWithdrawals.length} Permintaan</p>
             </div>
           </div>
-          <span className="text-xs font-bold text-sky-400 underline cursor-pointer">Tinjau</span>
+          {pendingWithdrawals.length > 0 && (
+            <span className="px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-400 text-[10px] font-bold animate-pulse">
+              Perlu Transfer
+            </span>
+          )}
         </div>
 
         <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="p-2.5 rounded-xl bg-emerald-500 text-slate-950 font-black">
-              <ShieldCheck className="w-5 h-5" />
+              <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-xs font-bold text-emerald-300">Sistem Keamanan Akun</p>
-              <p className="text-xs text-slate-300 font-semibold">Semua Enkripsi & JWT Normal</p>
+              <p className="text-xs font-bold text-emerald-300">Produk Investasi Tersedia</p>
+              <p className="text-lg font-black text-white">{products.length} Paket Saham</p>
             </div>
           </div>
-          <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full font-bold">Terproteksi</span>
+          <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
+            Aktif
+          </span>
         </div>
       </div>
 
-      {/* Visual Chart Simulation & Analytics */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white flex items-center space-x-2">
-            <Activity className="w-4 h-4 text-amber-400" />
-            <span>Proyeksi Tren Kas & Dividen Harian Platform</span>
-          </h3>
-          <span className="text-xs text-slate-400 font-semibold">6 Bulan Terakhir</span>
-        </div>
+      {/* Recent Activity Table */}
+      <div className="rounded-3xl bg-slate-900 border border-slate-800 p-5 space-y-4">
+        <h3 className="font-bold text-sm text-white flex items-center gap-2">
+          <Clock className="w-4 h-4 text-amber-400" />
+          <span>Aktivitas Transaksi Terkini</span>
+        </h3>
 
-        <div className="h-48 w-full flex items-end justify-between gap-2 pt-8 pb-2 px-4 bg-slate-950/60 rounded-2xl border border-slate-800/80">
-          {[
-            { month: 'Jan', deposit: 40, withdrawal: 15 },
-            { month: 'Feb', deposit: 55, withdrawal: 20 },
-            { month: 'Mar', deposit: 70, withdrawal: 28 },
-            { month: 'Apr', deposit: 82, withdrawal: 35 },
-            { month: 'May', deposit: 90, withdrawal: 42 },
-            { month: 'Jun', deposit: 100, withdrawal: 50 },
-          ].map((bar, idx) => (
-            <div key={idx} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-              <div className="w-full flex items-end justify-center gap-1.5 h-full">
-                <div
-                  className="w-1/3 bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-t-md transition-all hover:brightness-125"
-                  style={{ height: `${bar.deposit}%` }}
-                  title={`Deposit: ${bar.deposit}%`}
-                />
-                <div
-                  className="w-1/3 bg-gradient-to-t from-rose-600 to-rose-400 rounded-t-md transition-all hover:brightness-125"
-                  style={{ height: `${bar.withdrawal}%` }}
-                  title={`Penarikan: ${bar.withdrawal}%`}
-                />
-              </div>
-              <span className="text-[10px] text-slate-400 font-bold mt-2">{bar.month}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-center space-x-6 text-xs font-semibold pt-2">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded bg-emerald-400" />
-            <span className="text-slate-300">Volume Deposit</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 rounded bg-rose-400" />
-            <span className="text-slate-300">Volume Penarikan</span>
-          </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-300">
+            <thead className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px]">
+              <tr>
+                <th className="py-2.5 px-3">No. Ref</th>
+                <th className="py-2.5 px-3">Tipe</th>
+                <th className="py-2.5 px-3">Jumlah</th>
+                <th className="py-2.5 px-3">Metode/Keterangan</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 px-3">Waktu</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {transactions.slice(0, 8).map((t) => (
+                <tr key={t.id} className="hover:bg-slate-800/30">
+                  <td className="py-2.5 px-3 font-mono font-bold text-amber-400">{t.id}</td>
+                  <td className="py-2.5 px-3 font-bold">
+                    <span className={`px-2 py-0.5 rounded text-[10px] ${
+                      t.type === 'DEPOSIT'
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : t.type === 'WITHDRAWAL'
+                        ? 'bg-rose-500/20 text-rose-400'
+                        : 'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {t.type}
+                    </span>
+                  </td>
+                  <td className="py-2.5 px-3 font-black text-white">{formatRupiah(t.amount)}</td>
+                  <td className="py-2.5 px-3 text-slate-300">{t.paymentMethod || t.accountDetails || t.note}</td>
+                  <td className="py-2.5 px-3">
+                    {t.status === 'APPROVED' || t.status === 'SUCCESS' ? (
+                      <span className="text-emerald-400 font-bold">Disetujui</span>
+                    ) : t.status === 'REJECTED' ? (
+                      <span className="text-rose-400 font-bold">Ditolak</span>
+                    ) : (
+                      <span className="text-amber-400 font-bold animate-pulse">Pending</span>
+                    )}
+                  </td>
+                  <td className="py-2.5 px-3 text-slate-400 font-mono text-[11px]">
+                    {new Date(t.date).toLocaleString('id-ID')}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

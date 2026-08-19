@@ -62,7 +62,15 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   openDepositModal,
   openWithdrawModal,
 }) => {
-  const { user, userInvestments, claimDailyProfit, claimAllDailyProfits, transactions } = useApp();
+  const {
+    user,
+    userInvestments,
+    claimDailyProfit,
+    claimAllDailyProfits,
+    canClaimInvestmentToday,
+    getTimeUntilNextClaim,
+    transactions,
+  } = useApp();
   const { theme } = useTheme();
 
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
@@ -71,7 +79,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
   const activeInvs = userInvestments.filter((i) => i.status === 'ACTIVE');
   const totalActiveInvestmentValue = activeInvs.reduce((acc, curr) => acc + curr.amountInvested, 0);
-  const pendingProfitCount = activeInvs.length;
+  const readyProfitCount = activeInvs.filter(canClaimInvestmentToday).length;
 
   const todayProfit = activeInvs.reduce((sum, i) => sum + i.dailyProfit, 0);
   const yesterdayProfit = Math.round(todayProfit * 0.92);
@@ -481,31 +489,42 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             <div className="flex items-center justify-between mb-3">
               <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold flex items-center space-x-1">
                 <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Otomatisasi Profit Harian</span>
+                <span>Otomatisasi Dividen 24 Jam</span>
               </span>
-              <span className="text-[11px] text-slate-400">Ready</span>
+              <span className="text-[11px] text-slate-400 font-mono">
+                {readyProfitCount > 0 ? 'Siap Klaim' : 'Siklus Aktif'}
+              </span>
             </div>
 
-            <h3 className="text-lg font-bold">Klaim Profit Harian Sekaligus</h3>
+            <h3 className="text-lg font-bold">Klaim Dividen Harian Sekaligus</h3>
             <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-              Tekan tombol di bawah untuk memproses profit harian dari semua paket investasi aktif Anda.
+              Dividen dihitung otomatis per 24 jam. Produk 35H dialokasikan ke Saldo Profit (cair saat durasi selesai), produk 1H & 3H langsung masuk ke Saldo Penarikan.
             </p>
 
             <div className="my-5 p-4 bg-slate-800/80 rounded-xl border border-slate-700">
-              <span className="text-xs text-slate-400 block mb-1">Paket Aktif Menghasilkan</span>
+              <span className="text-xs text-slate-400 block mb-1">Paket Siap Klaim Hari Ini</span>
               <div className="flex items-baseline space-x-2">
-                <span className="text-2xl font-extrabold text-amber-400">{pendingProfitCount} Paket</span>
-                <span className="text-xs text-slate-300">Siap Ditagihkan</span>
+                <span className="text-2xl font-extrabold text-amber-400">{readyProfitCount} Paket</span>
+                <span className="text-xs text-slate-300">dari {activeInvs.length} Paket Aktif</span>
               </div>
             </div>
           </div>
 
           <button
             onClick={claimAllDailyProfits}
-            className="w-full py-3 px-4 rounded-xl font-extrabold text-sm text-slate-950 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 transition-all shadow-lg active:scale-95 flex items-center justify-center space-x-2"
+            disabled={readyProfitCount === 0}
+            className={`w-full py-3 px-4 rounded-xl font-extrabold text-sm transition-all shadow-lg flex items-center justify-center space-x-2 cursor-pointer ${
+              readyProfitCount > 0
+                ? 'text-slate-950 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 active:scale-95'
+                : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-80'
+            }`}
           >
-            <PlayCircle className="w-5 h-5 fill-slate-950 text-amber-400" />
-            <span>KLAIM SEMUA PROFIT SEKARANG</span>
+            <PlayCircle className={`w-5 h-5 ${readyProfitCount > 0 ? 'fill-slate-950 text-amber-400' : 'text-slate-500'}`} />
+            <span>
+              {readyProfitCount > 0
+                ? `KLAIM SEMUA PROFIT (${readyProfitCount} PAKET)`
+                : 'SEMUA SIKLUS 24 JAM SEDANG BERJALAN'}
+            </span>
           </button>
         </div>
       </div>
@@ -518,12 +537,12 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               Investasi Berjalan Saya ({activeInvs.length})
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Progress durasi dan akrual profit harian
+              Progress durasi dan akrual dividen harian otomatis
             </p>
           </div>
           <button
             onClick={() => setActiveTab('portfolio')}
-            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1"
+            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1 cursor-pointer"
           >
             <span>Lihat Semua Portfolio</span>
             <ChevronRight className="w-4 h-4" />
@@ -541,7 +560,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             </p>
             <button
               onClick={() => setActiveTab('products')}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm cursor-pointer"
               style={{ backgroundColor: theme.primaryColor }}
             >
               Jelajahi Produk Investasi
@@ -552,10 +571,13 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             {activeInvs.map((inv, idx) => {
               const progressPct = Math.round((inv.daysElapsed / inv.totalDays) * 100);
               const is35H = inv.isLockable35H || inv.totalDays >= 35;
+              const isReady = canClaimInvestmentToday(inv);
+              const timeRemaining = getTimeUntilNextClaim(inv);
+
               return (
                 <div
                   key={`${inv.id}-${idx}`}
-                  className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between space-y-3"
+                  className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700/80 flex flex-col justify-between space-y-3 shadow-sm"
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -564,12 +586,12 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                           {inv.status}
                         </span>
                         {is35H ? (
-                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded">
+                          <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-800">
                             35H Lock Profit
                           </span>
                         ) : (
-                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded">
-                            Fast Yield Ditarik
+                          <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-800">
+                            {inv.totalDays}H Fast Yield
                           </span>
                         )}
                       </div>
@@ -577,7 +599,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                         {inv.productName}
                       </h4>
                     </div>
-                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-1 rounded-lg">
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-1 rounded-lg border border-emerald-500/20">
                       +Rp {inv.dailyProfit.toLocaleString('id-ID')}/hari
                     </span>
                   </div>
@@ -595,23 +617,57 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                    <div className="text-xs">
-                      <span className="text-slate-400 block text-[10px]">
-                        {is35H ? 'Profit -> Saldo Profit' : 'Profit -> Saldo Penarikan'}
+                  {/* Profit Destination Note */}
+                  <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300 flex items-center justify-between">
+                    <div>
+                      <span className="text-slate-400 block text-[10px] uppercase font-bold">
+                        {is35H ? 'Profit Masuk ke Saldo Profit' : 'Profit Masuk ke Saldo Penarikan'}
                       </span>
-                      <span className="font-extrabold text-slate-900 dark:text-white">
+                      <span className="font-extrabold text-slate-900 dark:text-white text-xs">
                         Rp {inv.profitEarned.toLocaleString('id-ID')}
                       </span>
                     </div>
+                    <div className="text-right text-[10px] text-slate-400">
+                      {is35H ? (
+                        <span className="text-amber-500 font-semibold">*Cair saat hari ke-35</span>
+                      ) : (
+                        <span className="text-emerald-400 font-semibold">*Siap ditarik harian</span>
+                      )}
+                    </div>
+                  </div>
 
-                    <button
-                      onClick={() => claimDailyProfit(inv.id)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-all active:scale-95 flex items-center space-x-1"
-                    >
-                      <Zap className="w-3.5 h-3.5" />
-                      <span>Klaim Profit</span>
-                    </button>
+                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+                    <div className="text-[11px]">
+                      {isReady ? (
+                        <span className="text-emerald-500 font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Dividen Siap Klaim</span>
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 flex items-center gap-1 font-mono text-[10px]">
+                          <Clock className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+                          <span>Siklus 24J ({timeRemaining})</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {isReady ? (
+                      <button
+                        onClick={() => claimDailyProfit(inv.id)}
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-black bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all active:scale-95 flex items-center space-x-1 cursor-pointer"
+                      >
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <span>Klaim Profit</span>
+                      </button>
+                    ) : (
+                      <button
+                        disabled
+                        className="px-3 py-1.5 rounded-xl text-[11px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-slate-700 cursor-not-allowed flex items-center space-x-1"
+                      >
+                        <Clock className="w-3 h-3 text-slate-400" />
+                        <span>Berjalan Otomatis</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               );

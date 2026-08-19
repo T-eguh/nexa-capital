@@ -89,6 +89,27 @@ export interface DownlineUser {
   level: 1 | 2 | 3;
 }
 
+export interface RegisteredUser {
+  id: string;
+  fullName: string;
+  username: string;
+  email: string;
+  phone: string;
+  password?: string;
+  roles: string[];
+  saldoPenarikan: number;
+  saldoProfit: number;
+  totalInvested: number;
+  totalProfitEarned: number;
+  totalReferralCommission: number;
+  vipLevel: VipLevel;
+  referralCode: string;
+  referredBy?: string;
+  isLockedOut?: boolean;
+  registeredAt: string;
+}
+
+
 export interface UserProfile {
   id: string;
   name: string;

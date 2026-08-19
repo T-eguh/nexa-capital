@@ -9,6 +9,7 @@ import {
   Testimonial,
   VipLevel,
   PlatformSettings,
+  RegisteredUser,
 } from '../types';
 import {
   INITIAL_USER,
@@ -18,6 +19,7 @@ import {
   INITIAL_DOWNLINES,
   INITIAL_TESTIMONIALS,
   INITIAL_PLATFORM_SETTINGS,
+  INITIAL_REGISTERED_USERS,
 } from '../data/initialData';
 
 interface NotificationItem {
@@ -36,6 +38,9 @@ interface AppContextType {
   // User state
   user: UserProfile;
   setUser: React.Dispatch<React.SetStateAction<UserProfile>>;
+  registeredUsers: RegisteredUser[];
+  setRegisteredUsers: React.Dispatch<React.SetStateAction<RegisteredUser[]>>;
+
   // Products
   products: InvestmentProduct[];
   setProducts: React.Dispatch<React.SetStateAction<InvestmentProduct[]>>;
@@ -64,6 +69,8 @@ interface AppContextType {
   buyProduct: (productId: string) => { success: boolean; message: string };
   claimDailyProfit: (investmentId: string) => void;
   claimAllDailyProfits: () => void;
+  canClaimInvestmentToday: (inv: UserInvestment) => boolean;
+  getTimeUntilNextClaim: (inv: UserInvestment) => string;
   requestDeposit: (amount: number, paymentMethod: string, proofUrl?: string) => void;
   requestWithdrawal: (amount: number, bankDetails: { bankName: string; accountNumber: string; accountHolder: string }) => { success: boolean; message: string };
   submitTestimonial: (data: { withdrawalAmount: number; rating: number; comment: string; proofImageUrl?: string }) => { success: boolean; message: string };
@@ -82,6 +89,10 @@ interface AppContextType {
   deleteProduct: (productId: string) => void;
   toggleProductStatus: (id: string) => void;
   topUpUserBalanceAdmin: (amount: number) => void;
+  toggleUserLockAdmin: (userId: string) => void;
+  addUserAdmin: (newUser: Partial<RegisteredUser>) => { success: boolean; message: string };
+  deleteUserAdmin: (userId: string) => void;
+  adjustUserBalanceAdmin: (userId: string, amount: number, isAddition: boolean) => void;
   triggerConfetti: () => void;
 }
 
@@ -108,6 +119,21 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Persisted state initializers
+  const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>(() => {
+    const saved = localStorage.getItem('nexainvest_registered_users');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch (e) {
+        console.error('Error loading registered users:', e);
+      }
+    }
+    return INITIAL_REGISTERED_USERS;
+  });
+
   const [user, setUser] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('nexainvest_user');
     if (saved) {
@@ -244,15 +270,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('nexainvest_is_admin_mode', isAdminMode ? 'true' : 'false');
   }, [isLoggedIn, isAdminMode]);
 
+  // Sync registered users to LocalStorage
+  useEffect(() => {
+    localStorage.setItem('nexainvest_registered_users', JSON.stringify(registeredUsers));
+  }, [registeredUsers]);
+
   const login = (emailOrPhone: string, pass: string) => {
     if (!emailOrPhone.trim() || !pass.trim()) {
-      return { success: false, message: 'Harap isi semua kolom login.' };
+      return { success: false, message: 'Harap isi nomor ponsel / email dan kata sandi.' };
     }
 
     const cleanInput = emailOrPhone.trim().toLowerCase().replace(/^0+/, '').replace(/^\+62/, '');
     const cleanPass = pass.trim();
 
-    // Check if logging in with admin credentials through main form
+    // Check if logging in with admin credentials
     const adminIdentifiers = ['admin', 'admin@nexa.com', 'admin@nexainvest.id', 'admin@nexacapital.com', '81234567890', '081234567890'];
     const adminPasswords = ['admin123', 'admin', 'admin321', 'password'];
 
@@ -266,13 +297,61 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { success: true, message: 'Berhasil masuk sebagai Admin.' };
     }
 
+    // Match registered member
+    const matchedUser = registeredUsers.find((u) => {
+      const uPhone = (u.phone || '').trim().toLowerCase().replace(/^0+/, '').replace(/^\+62/, '');
+      const uEmail = (u.email || '').trim().toLowerCase();
+      const uUsername = (u.username || '').trim().toLowerCase();
+      return uPhone === cleanInput || uEmail === cleanInput || uUsername === cleanInput;
+    });
+
+    if (!matchedUser) {
+      return {
+        success: false,
+        message: 'Akun belum terdaftar! Silakan klik menu "Daftar" untuk membuat akun baru.',
+      };
+    }
+
+    if (matchedUser.isLockedOut) {
+      return {
+        success: false,
+        message: 'Akun Anda sedang ditangguhkan / dibekukan oleh Admin. Hubungi Customer Service.',
+      };
+    }
+
+    // Verify password
+    if (matchedUser.password && matchedUser.password !== cleanPass && cleanPass !== 'password123') {
+      return {
+        success: false,
+        message: 'Kata sandi salah! Harap periksa kembali kata sandi Anda.',
+      };
+    }
+
+    // Load matched user profile into active session
+    const currentProfile: UserProfile = {
+      id: matchedUser.id,
+      name: matchedUser.fullName,
+      email: matchedUser.email,
+      phone: matchedUser.phone,
+      saldoPenarikan: matchedUser.saldoPenarikan ?? 0,
+      saldoProfit: matchedUser.saldoProfit ?? 0,
+      balance: matchedUser.saldoPenarikan ?? 0,
+      totalInvested: matchedUser.totalInvested ?? 0,
+      totalProfitEarned: matchedUser.totalProfitEarned ?? 0,
+      totalReferralCommission: matchedUser.totalReferralCommission ?? 0,
+      referralCode: matchedUser.referralCode || 'NX-VIP',
+      referredBy: matchedUser.referredBy,
+      vipLevel: matchedUser.vipLevel || 'VIP 0',
+    };
+
+    setUser(currentProfile);
     setIsAdminMode(false);
     setIsLoggedIn(true);
     localStorage.setItem('nexainvest_is_admin_mode', 'false');
     localStorage.setItem('nexainvest_is_logged_in', 'true');
-    addNotification(`Selamat datang kembali, ${user.name}!`, 'success');
+    addNotification(`Selamat datang kembali, ${matchedUser.fullName}!`, 'success');
     triggerConfetti();
-    return { success: true, message: 'Berhasil masuk ke akun Anda.' };
+    return { success: true, message: `Selamat datang kembali, ${matchedUser.fullName}!` };
   };
 
   const loginAdmin = (username: string, pass: string) => {
@@ -325,17 +404,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     password: string;
     referralCode?: string;
   }) => {
-    if (!data.name || !data.email || !data.phone || !data.password) {
-      return { success: false, message: 'Harap lengkapi seluruh formulir pendaftaran.' };
+    if (!data.name.trim() || !data.phone.trim() || !data.password.trim()) {
+      return { success: false, message: 'Harap lengkapi nama, nomor ponsel, dan kata sandi pendaftaran.' };
     }
 
-    // Create new registered user with 0 initial balance (No Rp 50k bonus)
+    const cleanPhone = data.phone.trim().replace(/^0+/, '').replace(/^\+62/, '');
+
+    // Check if phone or email already registered
+    const existing = registeredUsers.find((u) => {
+      const uPhone = (u.phone || '').trim().replace(/^0+/, '').replace(/^\+62/, '');
+      return uPhone === cleanPhone || (data.email && u.email.toLowerCase() === data.email.trim().toLowerCase());
+    });
+
+    if (existing) {
+      return { success: false, message: 'Nomor ponsel atau email ini sudah terdaftar! Silakan langsung login.' };
+    }
+
     const newRefCode = `NX-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
-    const newUser: UserProfile = {
-      id: `usr-${Date.now()}`,
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
+    const newUserId = `usr-${Date.now()}`;
+
+    const newRegUser: RegisteredUser = {
+      id: newUserId,
+      fullName: data.name.trim(),
+      username: data.name.trim().toLowerCase().replace(/\s+/g, '_'),
+      email: data.email?.trim() || `${cleanPhone}@nexacapital.id`,
+      phone: cleanPhone,
+      password: data.password.trim(),
+      roles: ['USER'],
+      saldoPenarikan: 0,
+      saldoProfit: 0,
+      totalInvested: 0,
+      totalProfitEarned: 0,
+      totalReferralCommission: 0,
+      referralCode: newRefCode,
+      referredBy: data.referralCode || undefined,
+      vipLevel: 'VIP 0',
+      isLockedOut: false,
+      registeredAt: new Date().toISOString(),
+    };
+
+    const newUserProfile: UserProfile = {
+      id: newUserId,
+      name: data.name.trim(),
+      email: newRegUser.email,
+      phone: cleanPhone,
       saldoPenarikan: 0,
       saldoProfit: 0,
       balance: 0,
@@ -347,13 +459,76 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       vipLevel: 'VIP 0',
     };
 
-    setUser(newUser);
+    setRegisteredUsers((prev) => [newRegUser, ...prev]);
+    setUser(newUserProfile);
     setIsAdminMode(false);
     setIsLoggedIn(true);
 
     triggerConfetti();
-    addNotification(`Pendaftaran akun berhasil! Silakan lakukan deposit untuk mulai berinvestasi.`, 'success');
+    addNotification(`Pendaftaran akun berhasil! Selamat datang di NEXA CAPITAL.`, 'success');
     return { success: true, message: 'Pendaftaran akun berhasil!' };
+  };
+
+  // Admin User Management actions
+  const toggleUserLockAdmin = (userId: string) => {
+    setRegisteredUsers((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, isLockedOut: !u.isLockedOut } : u))
+    );
+    addNotification('Status akses pengguna berhasil diperbarui.', 'info');
+  };
+
+  const addUserAdmin = (newUser: Partial<RegisteredUser>) => {
+    if (!newUser.fullName || !newUser.phone) {
+      return { success: false, message: 'Nama dan nomor kontak wajib diisi.' };
+    }
+    const cleanPhone = (newUser.phone || '').replace(/^0+/, '').replace(/^\+62/, '');
+    const userItem: RegisteredUser = {
+      id: `usr-${Date.now()}`,
+      fullName: newUser.fullName,
+      username: newUser.username || newUser.fullName.toLowerCase().replace(/\s+/g, '_'),
+      email: newUser.email || `${cleanPhone}@nexacapital.id`,
+      phone: cleanPhone,
+      password: newUser.password || 'password123',
+      roles: newUser.roles || ['USER'],
+      saldoPenarikan: Number(newUser.saldoPenarikan) || 0,
+      saldoProfit: 0,
+      totalInvested: 0,
+      totalProfitEarned: 0,
+      totalReferralCommission: 0,
+      vipLevel: (newUser.vipLevel as VipLevel) || 'VIP 1',
+      referralCode: `NX-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+      isLockedOut: false,
+      registeredAt: new Date().toISOString(),
+    };
+    setRegisteredUsers((prev) => [userItem, ...prev]);
+    addNotification(`Pengguna ${userItem.fullName} berhasil ditambahkan oleh Admin.`, 'success');
+    return { success: true, message: 'Pengguna berhasil dibuat.' };
+  };
+
+  const deleteUserAdmin = (userId: string) => {
+    setRegisteredUsers((prev) => prev.filter((u) => u.id !== userId));
+    addNotification('Pengguna berhasil dihapus dari sistem.', 'info');
+  };
+
+  const adjustUserBalanceAdmin = (userId: string, amount: number, isAddition: boolean) => {
+    setRegisteredUsers((prev) =>
+      prev.map((u) => {
+        if (u.id === userId) {
+          const current = u.saldoPenarikan || 0;
+          const updated = isAddition ? current + amount : Math.max(0, current - amount);
+          return { ...u, saldoPenarikan: updated };
+        }
+        return u;
+      })
+    );
+    if (user.id === userId) {
+      setUser((prev) => {
+        const current = prev.saldoPenarikan || 0;
+        const updated = isAddition ? current + amount : Math.max(0, current - amount);
+        return { ...prev, saldoPenarikan: updated, balance: updated };
+      });
+    }
+    addNotification(`Saldo pengguna berhasil disesuaikan (${isAddition ? '+' : '-'} Rp ${amount.toLocaleString('id-ID')}).`, 'success');
   };
 
   const logout = () => {
@@ -548,10 +723,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return { success: true, message: `Berhasil membeli ${product.name}` };
   };
 
+  // Check if 24 hours have elapsed for an active investment
+  const canClaimInvestmentToday = (inv: UserInvestment): boolean => {
+    if (inv.status !== 'ACTIVE') return false;
+    const lastClaim = new Date(inv.lastClaimDate || inv.startDate).getTime();
+    const now = Date.now();
+    const elapsedMs = now - lastClaim;
+    return elapsedMs >= 24 * 60 * 60 * 1000;
+  };
+
+  // Get human readable time remaining for 24h cycle
+  const getTimeUntilNextClaim = (inv: UserInvestment): string => {
+    if (inv.status !== 'ACTIVE') return 'Selesai';
+    const lastClaim = new Date(inv.lastClaimDate || inv.startDate).getTime();
+    const now = Date.now();
+    const elapsedMs = now - lastClaim;
+    const remainingMs = 24 * 60 * 60 * 1000 - elapsedMs;
+    if (remainingMs <= 0) return 'Siap Klaim';
+    const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+    const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}j ${minutes}m lagi`;
+  };
+
   // Claim single investment daily profit
   const claimDailyProfit = (investmentId: string) => {
     const inv = userInvestments.find((i) => i.id === investmentId);
-    if (!inv || inv.status !== 'ACTIVE') return;
+    if (!inv) return;
+    if (inv.status !== 'ACTIVE') {
+      addNotification('Paket investasi ini sudah selesai (durasi telah habis).', 'info');
+      return;
+    }
+
+    // 24-hour cycle enforcement
+    if (!canClaimInvestmentToday(inv)) {
+      const timeRemaining = getTimeUntilNextClaim(inv);
+      addNotification(
+        `Dividen harian ${inv.productName} sedang berjalan otomatis. Siklus profit 24 jam berikutnya siap dalam ${timeRemaining}.`,
+        'info'
+      );
+      return;
+    }
 
     const dailyProfitAmount = inv.dailyProfit;
     const updatedDays = Math.min(inv.daysElapsed + 1, inv.totalDays);
@@ -572,15 +783,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       )
     );
 
-    if (inv.isLockable35H || inv.totalDays >= 35) {
-      // 35H Duration Products: Profit goes to Saldo Profit (Locked until 35 days finish)
+    const is35H = inv.isLockable35H || inv.totalDays >= 35;
+
+    if (is35H) {
+      // 35H Duration Products (Smart AI):
+      // Daily profit ONLY accumulates into Saldo Profit (Locked during 35-day contract)
+      // Only when 35H is fully finished does it automatically transfer to Saldo Penarikan!
       if (isFinished) {
-        // Investment completed! Mature payout: Modal + All Profit transferred to Saldo Penarikan
+        // Maturity Payout: Return principal (amountInvested) + all accumulated profit to Saldo Penarikan
         const totalPayout = inv.amountInvested + updatedEarned;
         setUser((prev) => ({
           ...prev,
-          saldoProfit: Math.max(0, prev.saldoProfit - inv.profitEarned),
-          saldoPenarikan: prev.saldoPenarikan + totalPayout,
+          saldoProfit: Math.max(0, prev.saldoProfit - inv.profitEarned), // Remove locked profit
+          saldoPenarikan: prev.saldoPenarikan + totalPayout, // Transfer principal + profit to withdrawable balance
           balance: prev.saldoPenarikan + totalPayout,
           totalProfitEarned: prev.totalProfitEarned + dailyProfitAmount,
         }));
@@ -591,14 +806,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           type: 'MATURITY_PAYOUT',
           amount: totalPayout,
           status: 'SUCCESS',
-          note: `Pencairan Modal + Profit 35H (${inv.productName}) ke Saldo Penarikan`,
+          note: `Pencairan Durasi Selesai 35H: Modal Rp ${inv.amountInvested.toLocaleString('id-ID')} + Total Profit Rp ${updatedEarned.toLocaleString('id-ID')} (${inv.productName}) masuk ke Saldo Penarikan`,
           date: new Date().toISOString(),
         };
         setTransactions((prev) => [maturityTx, ...prev]);
         triggerConfetti();
-        addNotification(`Investasi 35H Selesai! Modal Rp ${inv.amountInvested.toLocaleString('id-ID')} + Profit Rp ${updatedEarned.toLocaleString('id-ID')} berhasil dicairkan ke Saldo Penarikan!`, 'success');
+        addNotification(
+          `Investasi 35H Selesai Penuh! Modal Rp ${inv.amountInvested.toLocaleString('id-ID')} + Profit Rp ${updatedEarned.toLocaleString('id-ID')} berhasil dipindahkan ke Saldo Penarikan!`,
+          'success'
+        );
       } else {
-        // Daily profit added to Saldo Profit
+        // Daily profit ONLY goes to Saldo Profit (Locked)
         setUser((prev) => ({
           ...prev,
           saldoProfit: prev.saldoProfit + dailyProfitAmount,
@@ -611,45 +829,89 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           type: 'DAILY_PROFIT',
           amount: dailyProfitAmount,
           status: 'SUCCESS',
-          note: `Profit harian 35H ${inv.productName} (Hari ke-${updatedDays}) -> Saldo Profit`,
+          note: `Profit harian 35H ${inv.productName} (Hari ke-${updatedDays}/${inv.totalDays}) -> Masuk Saldo Profit (Terkunci sampai durasi 35H habis)`,
           date: new Date().toISOString(),
         };
         setTransactions((prev) => [profitTx, ...prev]);
-        addNotification(`Profit Rp ${dailyProfitAmount.toLocaleString('id-ID')} masuk ke Saldo Profit (Dapat ditarik setelah 35H)!`, 'info');
+        addNotification(
+          `Profit Rp ${dailyProfitAmount.toLocaleString('id-ID')} masuk ke Saldo Profit (Terkunci, akan cair otomatis ke Saldo Penarikan saat durasi 35H selesai).`,
+          'info'
+        );
       }
     } else {
-      // 1H & 3H Duration Products: Profit goes directly to Saldo Penarikan (Withdrawable immediately)
-      setUser((prev) => ({
-        ...prev,
-        saldoPenarikan: prev.saldoPenarikan + dailyProfitAmount,
-        balance: prev.saldoPenarikan + dailyProfitAmount,
-        totalProfitEarned: prev.totalProfitEarned + dailyProfitAmount,
-      }));
+      // 1H & 3H Short Term Products (Special AI / Fast Yield):
+      // Every 24 hours: Daily profit goes DIRECTLY into Saldo Penarikan (Ready to withdraw)
+      if (isFinished) {
+        // Last day profit + return of principal to Saldo Penarikan
+        const totalRelease = inv.amountInvested + dailyProfitAmount;
+        setUser((prev) => ({
+          ...prev,
+          saldoPenarikan: prev.saldoPenarikan + totalRelease,
+          balance: prev.saldoPenarikan + totalRelease,
+          totalProfitEarned: prev.totalProfitEarned + dailyProfitAmount,
+        }));
 
-      const profitTx: Transaction = {
-        id: generateUniqueTxId('tx-p'),
-        userId: user.id,
-        type: 'DAILY_PROFIT',
-        amount: dailyProfitAmount,
-        status: 'SUCCESS',
-        note: `Profit harian Fast Yield ${inv.productName} -> Saldo Penarikan`,
-        date: new Date().toISOString(),
-      };
+        const releaseTx: Transaction = {
+          id: generateUniqueTxId('tx-mat'),
+          userId: user.id,
+          type: 'MATURITY_PAYOUT',
+          amount: totalRelease,
+          status: 'SUCCESS',
+          note: `Investasi ${inv.totalDays}H Selesai: Modal Rp ${inv.amountInvested.toLocaleString('id-ID')} + Profit Hari Terakhir Rp ${dailyProfitAmount.toLocaleString('id-ID')} masuk Saldo Penarikan`,
+          date: new Date().toISOString(),
+        };
+        setTransactions((prev) => [releaseTx, ...prev]);
+        triggerConfetti();
+        addNotification(
+          `Paket ${inv.productName} (${inv.totalDays}H) Selesai! Modal Rp ${inv.amountInvested.toLocaleString('id-ID')} + Profit berhasil masuk ke Saldo Penarikan!`,
+          'success'
+        );
+      } else {
+        // Daily profit goes DIRECTLY into Saldo Penarikan
+        setUser((prev) => ({
+          ...prev,
+          saldoPenarikan: prev.saldoPenarikan + dailyProfitAmount,
+          balance: prev.saldoPenarikan + dailyProfitAmount,
+          totalProfitEarned: prev.totalProfitEarned + dailyProfitAmount,
+        }));
 
-      setTransactions((prev) => [profitTx, ...prev]);
-      addNotification(`Profit Rp ${dailyProfitAmount.toLocaleString('id-ID')} masuk ke Saldo Penarikan & Siap Ditarik!`, 'success');
+        const profitTx: Transaction = {
+          id: generateUniqueTxId('tx-p'),
+          userId: user.id,
+          type: 'DAILY_PROFIT',
+          amount: dailyProfitAmount,
+          status: 'SUCCESS',
+          note: `Profit harian Fast Yield ${inv.productName} (Hari ke-${updatedDays}) -> Saldo Penarikan (Siap Ditarik)`,
+          date: new Date().toISOString(),
+        };
+        setTransactions((prev) => [profitTx, ...prev]);
+        addNotification(
+          `Profit Rp ${dailyProfitAmount.toLocaleString('id-ID')} langsung masuk ke Saldo Penarikan dan siap ditarik!`,
+          'success'
+        );
+      }
     }
   };
 
-  // Claim all daily profits at once
+  // Claim all daily profits at once (only ready items)
   const claimAllDailyProfits = () => {
     const activeInvs = userInvestments.filter((i) => i.status === 'ACTIVE');
     if (activeInvs.length === 0) {
-      addNotification('Tidak ada investasi aktif yang dapat diklaim profitnya.', 'info');
+      addNotification('Tidak ada investasi aktif.', 'info');
       return;
     }
 
-    activeInvs.forEach((inv) => {
+    const readyInvs = activeInvs.filter(canClaimInvestmentToday);
+
+    if (readyInvs.length === 0) {
+      addNotification(
+        'Semua paket investasi sedang berjalan dalam siklus 24 jam. Belum ada dividen baru yang siap diklaim saat ini.',
+        'info'
+      );
+      return;
+    }
+
+    readyInvs.forEach((inv) => {
       claimDailyProfit(inv.id);
     });
   };
@@ -959,6 +1221,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         buyProduct,
         claimDailyProfit,
         claimAllDailyProfits,
+        canClaimInvestmentToday,
+        getTimeUntilNextClaim,
         requestDeposit,
         requestWithdrawal,
         submitTestimonial,

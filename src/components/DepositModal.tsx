@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
+import { generateDynamicQris, getQrisQrImageUrl } from '../utils/qrisGenerator';
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -23,7 +24,7 @@ interface DepositModalProps {
 }
 
 export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
-  const { platformSettings, topUpUserBalanceAdmin, triggerConfetti, addNotification } = useApp();
+  const { platformSettings, requestDeposit, triggerConfetti, addNotification } = useApp();
   const { theme } = useTheme();
 
   const [selectedAmount, setSelectedAmount] = useState<number>(100000);
@@ -32,7 +33,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
   const [autoGatewayMethod, setAutoGatewayMethod] = useState<'QRIS_1' | 'QRIS_2'>('QRIS_1');
 
   // Auto gateway step state
-  const [gatewayStep, setGatewayStep] = useState<'SELECT' | 'PAYMENT_PENDING' | 'SUCCESS'>('SELECT');
+  const [gatewayStep, setGatewayStep] = useState<'SELECT' | 'PAYMENT_PENDING' | 'PENDING_APPROVAL'>('SELECT');
   const [isProcessingGateway, setIsProcessingGateway] = useState<boolean>(false);
   const [countdownSeconds, setCountdownSeconds] = useState<number>(899); // 14m 59s
   const [createdRefNo, setCreatedRefNo] = useState<string>('');
@@ -102,16 +103,16 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
     setIsProcessingGateway(true);
 
     setTimeout(() => {
-      // Execute automatic payment
-      topUpUserBalanceAdmin(amountToDeposit);
+      // Create pending deposit request in transactions (Waiting for Admin approval)
+      requestDeposit(amountToDeposit, currentQrisName);
       setIsProcessingGateway(false);
-      setGatewayStep('SUCCESS');
+      setGatewayStep('PENDING_APPROVAL');
       triggerConfetti();
       addNotification(
-        `Pembayaran Otomatis Berhasil! Deposit Rp ${amountToDeposit.toLocaleString('id-ID')} telah ditambahkan ke Saldo Utama Anda.`,
-        'success'
+        `Pengajuan Deposit Rp ${amountToDeposit.toLocaleString('id-ID')} berhasil dibuat! Menunggu verifikasi admin.`,
+        'info'
       );
-    }, 1500);
+    }, 1200);
   };
 
   const handleResetModal = () => {
@@ -126,9 +127,14 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const currentQrisImage = autoGatewayMethod === 'QRIS_1'
-    ? platformSettings.qris1ImageUrl
-    : platformSettings.qris2ImageUrl;
+  const currentQrisRaw = autoGatewayMethod === 'QRIS_1'
+    ? '00020101021126570014ID.LINKAJA.WWW01189360091438201948215204581253033605802ID5920NEXA+CAPITAL+QRIS16007JAKARTA61051234062070703A016304'
+    : '00020101021126570014ID.LINKAJA.WWW01189360091438201948225204581253033605802ID5920NEXA+CAPITAL+QRIS26007JAKARTA61051234062070703A026304';
+
+  const dynamicQrisCode = generateDynamicQris(currentQrisRaw, amountToDeposit);
+  const dynamicQrisImageUrl = getQrisQrImageUrl(dynamicQrisCode);
+
+  const currentQrisImage = dynamicQrisImageUrl;
 
   const currentQrisName = autoGatewayMethod === 'QRIS_1'
     ? platformSettings.qris1Name
@@ -374,8 +380,8 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                   if (paymentType === 'AUTO_GATEWAY') {
                     handleStartAutoGateway();
                   } else {
-                    topUpUserBalanceAdmin(amountToDeposit);
-                    addNotification(`Deposit Rp ${amountToDeposit.toLocaleString('id-ID')} berhasil dibuat.`, 'info');
+                    requestDeposit(amountToDeposit, paymentType === 'BANK' ? 'Transfer Bank' : 'E-Wallet Transfer');
+                    addNotification(`Permintaan deposit Rp ${amountToDeposit.toLocaleString('id-ID')} berhasil dibuat! Menunggu verifikasi admin.`, 'info');
                     handleResetModal();
                   }
                 }}
@@ -469,37 +475,47 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
           </div>
         )}
 
-        {/* STEP 3: SUCCESS STATE */}
-        {gatewayStep === 'SUCCESS' && (
+        {/* STEP 3: PENDING APPROVAL STATE */}
+        {gatewayStep === 'PENDING_APPROVAL' && (
           <div className="py-6 text-center space-y-4 animate-fadeIn">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
-              <CheckCircle2 className="w-10 h-10 stroke-[2.5]" />
+            <div className="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto shadow-lg shadow-amber-500/20">
+              <Clock className="w-9 h-9 animate-pulse" />
             </div>
 
             <div>
-              <h3 className="text-lg font-black text-white">Pembayaran Gateway Berhasil!</h3>
+              <h3 className="text-lg font-black text-white">Deposit Sedang Diproses</h3>
               <p className="text-xs text-slate-400 mt-1">
-                Saldo sebesar <strong className="text-emerald-400 font-black">Rp {amountToDeposit.toLocaleString('id-ID')}</strong> telah berhasil dikreditkan ke akun Anda secara otomatis.
+                Pengajuan deposit sebesar <strong className="text-amber-400 font-black">Rp {amountToDeposit.toLocaleString('id-ID')}</strong> telah masuk ke sistem verifikasi admin. Saldo akan otomatis bertambah setelah disetujui.
               </p>
             </div>
 
-            <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 text-xs font-mono text-slate-300 text-left space-y-1">
+            <div className="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 text-xs font-mono text-slate-300 text-left space-y-1.5">
               <div className="flex justify-between">
-                <span className="text-slate-500">Referensi:</span>
-                <span>{createdRefNo}</span>
+                <span className="text-slate-500">Nomor Referensi:</span>
+                <span className="font-bold text-white">{createdRefNo}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Status Gateway:</span>
-                <span className="text-emerald-400 font-bold">SETTLED (SUCCESS)</span>
+                <span className="text-slate-500">Metode:</span>
+                <span>{currentQrisName}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Status Permintaan:</span>
+                <span className="text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                  MENUNGGU VERIFIKASI ADMIN
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-blue-950/40 border border-blue-500/30 rounded-xl text-left text-xs text-blue-200">
+              💡 <strong>Tips:</strong> Anda dapat memeriksa riwayat transaksi atau menghubungi CS di Telegram jika verifikasi belum masuk lebih dari 5 menit.
             </div>
 
             <button
               type="button"
               onClick={handleResetModal}
-              className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all active:scale-95 cursor-pointer"
+              className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all active:scale-95 cursor-pointer"
             >
-              SELESAI & CEK SALDO
+              TUTUP & CEK RIWAYAT
             </button>
           </div>
         )}
