@@ -21,6 +21,7 @@ import {
   INITIAL_PLATFORM_SETTINGS,
   INITIAL_REGISTERED_USERS,
 } from '../data/initialData';
+import { validateIndonesianPhoneNumber } from '../utils/phoneValidator';
 
 interface NotificationItem {
   id: string;
@@ -170,7 +171,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [userInvestments, setUserInvestments] = useState<UserInvestment[]>(() => {
     const saved = localStorage.getItem('nexainvest_user_investments');
-    return saved ? JSON.parse(saved) : INITIAL_USER_INVESTMENTS;
+    if (saved) {
+      try {
+        const parsed: UserInvestment[] = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map((inv) => ({
+            ...inv,
+            isLockable35H: inv.totalDays >= 35 || inv.isLockable35H,
+          }));
+        }
+      } catch (e) {
+        console.error('Error loading investments:', e);
+      }
+    }
+    return INITIAL_USER_INVESTMENTS;
   });
 
   const [transactions, setTransactionsRaw] = useState<Transaction[]>(() => {
@@ -408,12 +422,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { success: false, message: 'Harap lengkapi nama, nomor ponsel, dan kata sandi pendaftaran.' };
     }
 
-    const cleanPhone = data.phone.trim().replace(/^0+/, '').replace(/^\+62/, '');
+    const phoneCheck = validateIndonesianPhoneNumber(data.phone);
+    if (!phoneCheck.isValid || !phoneCheck.normalized) {
+      return {
+        success: false,
+        message: phoneCheck.message || 'Nomor ponsel tidak valid! Harap gunakan nomor ponsel aktif operator Indonesia.',
+      };
+    }
+
+    const cleanPhone = phoneCheck.normalized;
 
     // Check if phone or email already registered
     const existing = registeredUsers.find((u) => {
       const uPhone = (u.phone || '').trim().replace(/^0+/, '').replace(/^\+62/, '');
-      return uPhone === cleanPhone || (data.email && u.email.toLowerCase() === data.email.trim().toLowerCase());
+      const cleanPhoneDigits = cleanPhone.replace(/^0+/, '').replace(/^\+62/, '');
+      return uPhone === cleanPhoneDigits || (data.email && u.email.toLowerCase() === data.email.trim().toLowerCase());
     });
 
     if (existing) {

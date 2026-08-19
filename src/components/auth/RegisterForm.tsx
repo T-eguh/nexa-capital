@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Eye, EyeOff, CheckCircle2, AlertCircle, Loader2, ShieldCheck, Smartphone } from 'lucide-react';
 import { authService } from '../../services/authService';
 import { useApp } from '../../context/AppContext';
+import { validateIndonesianPhoneNumber } from '../../utils/phoneValidator';
 
 interface RegisterFormProps {
   onSuccess: () => void;
@@ -26,12 +27,27 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
   const { register: registerContext, addNotification, triggerConfetti } = useApp();
 
+  const phoneValidation = useMemo(() => {
+    if (!formData.phone) return null;
+    return validateIndonesianPhoneNumber(formData.phone);
+  }, [formData.phone]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    
+    // For phone, filter only numeric characters
+    if (name === 'phone') {
+      const sanitized = value.replace(/[^\d+]/g, '');
+      setFormData((prev) => ({
+        ...prev,
+        phone: sanitized,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
     if (errorMsg) setErrorMsg(null);
   };
 
@@ -42,6 +58,18 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
     if (!formData.fullName.trim() || !formData.phone.trim() || !formData.password.trim()) {
       setErrorMsg('Harap isi Nama Lengkap, Nomor Ponsel, dan Kata Sandi.');
+      return;
+    }
+
+    // Strict Phone Number Validation
+    const phoneCheck = validateIndonesianPhoneNumber(formData.phone);
+    if (!phoneCheck.isValid || !phoneCheck.normalized) {
+      setErrorMsg(phoneCheck.message || 'Nomor ponsel tidak valid! Harap gunakan nomor ponsel aktif operator Indonesia.');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setErrorMsg('Kata sandi minimal 6 karakter.');
       return;
     }
 
@@ -57,16 +85,16 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
     setLoading(true);
 
-    const cleanPhone = formData.phone.trim().replace(/^0+/, '').replace(/^\+62/, '');
-    const autoUsername = `user_${cleanPhone}`;
-    const autoEmail = `${cleanPhone}@nexacapital.id`;
+    const cleanPhone = phoneCheck.normalized;
+    const autoUsername = `user_${cleanPhone.replace(/^0+/, '')}`;
+    const autoEmail = `${cleanPhone.replace(/^0+/, '')}@nexacapital.id`;
 
     try {
       const res = await authService.register({
         fullName: formData.fullName.trim(),
         username: autoUsername,
         email: autoEmail,
-        phone: formData.phone.trim(),
+        phone: cleanPhone,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
         referralCode: formData.referralCode.trim() || undefined,
@@ -81,7 +109,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
         registerContext({
           name: formData.fullName.trim(),
           email: autoEmail,
-          phone: formData.phone.trim(),
+          phone: cleanPhone,
           password: formData.password,
           referralCode: formData.referralCode.trim(),
         });
@@ -95,7 +123,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
       const fallbackRes = registerContext({
         name: formData.fullName.trim(),
         email: autoEmail,
-        phone: formData.phone.trim(),
+        phone: cleanPhone,
         password: formData.password,
         referralCode: formData.referralCode.trim(),
       });
@@ -146,8 +174,22 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
       {/* 2. Nomor ponsel */}
       <div>
-        <label className="block text-xs font-bold text-slate-300 mb-1">Nomor ponsel</label>
-        <div className="flex items-center bg-slate-950/80 border border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-white focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all shadow-inner">
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-xs font-bold text-slate-300">Nomor ponsel</label>
+          {phoneValidation?.isValid && phoneValidation.provider && (
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center space-x-1 animate-fadeIn">
+              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+              <span>{phoneValidation.provider}</span>
+            </span>
+          )}
+        </div>
+        <div className={`flex items-center bg-slate-950/80 border rounded-2xl px-3.5 py-2.5 text-sm text-white transition-all shadow-inner ${
+          phoneValidation?.isValid
+            ? 'border-emerald-500/60 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20'
+            : formData.phone.length > 5 && !phoneValidation?.isValid
+            ? 'border-amber-500/60 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20'
+            : 'border-slate-800 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20'
+        }`}>
           <span className="font-bold text-amber-400 pr-3 border-r border-slate-800 mr-3 text-sm flex items-center shrink-0">
             +62
           </span>
@@ -156,11 +198,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            placeholder="8xxxxxxxxx"
-            className="w-full bg-transparent text-sm font-medium text-slate-100 focus:outline-none placeholder:text-slate-600"
+            placeholder="81234567890"
+            maxLength={14}
+            className="w-full bg-transparent text-sm font-medium text-slate-100 focus:outline-none placeholder:text-slate-600 font-mono tracking-wide"
             required
           />
+          {formData.phone && (
+            <span className="text-[10px] text-slate-500 font-mono ml-2 shrink-0">
+              {formData.phone.replace(/^0+/, '').length} digit
+            </span>
+          )}
         </div>
+        <p className="text-[10px] text-slate-500 mt-1">
+          Gunakan nomor WhatsApp aktif (Telkomsel, Indosat, XL, Axis, Tri, Smartfren).
+        </p>
       </div>
 
       {/* 3. Kata sandi & Konfirmasi (Side-by-side Grid 2 columns) */}
