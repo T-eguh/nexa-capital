@@ -87,6 +87,8 @@ export interface DownlineUser {
   totalSpent: number;
   commissionEarned: number;
   level: 1 | 2 | 3;
+  uplineReferralCode?: string;
+  uplineId?: string;
 }
 
 export interface RegisteredUser {

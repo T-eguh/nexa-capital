@@ -134,7 +134,9 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
   const dynamicQrisCode = generateDynamicQris(currentQrisRaw, amountToDeposit);
   const dynamicQrisImageUrl = getQrisQrImageUrl(dynamicQrisCode);
 
-  const currentQrisImage = dynamicQrisImageUrl;
+  const currentQrisImage = autoGatewayMethod === 'QRIS_1'
+    ? (platformSettings.qris1ImageUrl?.trim() || dynamicQrisImageUrl)
+    : (platformSettings.qris2ImageUrl?.trim() || dynamicQrisImageUrl);
 
   const currentQrisName = autoGatewayMethod === 'QRIS_1'
     ? platformSettings.qris1Name

@@ -726,6 +726,7 @@ export const INITIAL_DOWNLINES: DownlineUser[] = [
     totalSpent: 50000,
     commissionEarned: 16000,
     level: 1,
+    uplineReferralCode: 'OJQA3T2VNW',
   },
   {
     id: 'down-2',
@@ -735,6 +736,7 @@ export const INITIAL_DOWNLINES: DownlineUser[] = [
     totalSpent: 100000,
     commissionEarned: 2000,
     level: 2,
+    uplineReferralCode: 'OJQA3T2VNW',
   },
   {
     id: 'down-3',
@@ -744,6 +746,7 @@ export const INITIAL_DOWNLINES: DownlineUser[] = [
     totalSpent: 50000,
     commissionEarned: 500,
     level: 3,
+    uplineReferralCode: 'OJQA3T2VNW',
   },
 ];
 

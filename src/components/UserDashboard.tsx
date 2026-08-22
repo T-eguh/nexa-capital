@@ -77,7 +77,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isVipModalOpen, setIsVipModalOpen] = useState(false);
 
-  const activeInvs = userInvestments.filter((i) => i.status === 'ACTIVE');
+  const activeInvs = userInvestments.filter((i) => i.userId === user.id && i.status === 'ACTIVE');
   const totalActiveInvestmentValue = activeInvs.reduce((acc, curr) => acc + curr.amountInvested, 0);
   const readyProfitCount = activeInvs.filter(canClaimInvestmentToday).length;
 

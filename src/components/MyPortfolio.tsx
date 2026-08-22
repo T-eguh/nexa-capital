@@ -16,6 +16,7 @@ import { useTheme } from '../context/ThemeContext';
 
 export const MyPortfolio: React.FC = () => {
   const {
+    user,
     userInvestments,
     claimDailyProfit,
     claimAllDailyProfits,
@@ -26,19 +27,21 @@ export const MyPortfolio: React.FC = () => {
 
   const [activeTabFilter, setActiveTabFilter] = useState<'ACTIVE' | 'COMPLETED'>('ACTIVE');
 
-  const filteredInvestments = userInvestments.filter((i) => i.status === activeTabFilter);
-  const activeCount = userInvestments.filter((i) => i.status === 'ACTIVE').length;
-  const completedCount = userInvestments.filter((i) => i.status === 'COMPLETED').length;
+  // Filter scoped to current logged-in user
+  const currentUserInvs = userInvestments.filter((i) => i.userId === user.id);
+  const filteredInvestments = currentUserInvs.filter((i) => i.status === activeTabFilter);
+  const activeCount = currentUserInvs.filter((i) => i.status === 'ACTIVE').length;
+  const completedCount = currentUserInvs.filter((i) => i.status === 'COMPLETED').length;
 
-  const totalActiveInvested = userInvestments
+  const totalActiveInvested = currentUserInvs
     .filter((i) => i.status === 'ACTIVE')
     .reduce((sum, curr) => sum + curr.amountInvested, 0);
 
-  const totalActiveDailyReturn = userInvestments
+  const totalActiveDailyReturn = currentUserInvs
     .filter((i) => i.status === 'ACTIVE')
     .reduce((sum, curr) => sum + curr.dailyProfit, 0);
 
-  const readyInvs = userInvestments
+  const readyInvs = currentUserInvs
     .filter((i) => i.status === 'ACTIVE')
     .filter(canClaimInvestmentToday);
 

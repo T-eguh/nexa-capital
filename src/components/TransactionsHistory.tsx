@@ -17,13 +17,17 @@ import {
 import { useApp } from '../context/AppContext';
 
 export const TransactionsHistory: React.FC = () => {
-  const { transactions } = useApp();
+  const { transactions, user, isAdminMode } = useApp();
   const [filterType, setFilterType] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
 
-  const filteredTxs = transactions.filter((t) => {
+  const relevantTxs = isAdminMode
+    ? transactions
+    : transactions.filter((t) => t.userId === user.id);
+
+  const filteredTxs = relevantTxs.filter((t) => {
     const matchesType = filterType === 'ALL' || t.type === filterType;
     const matchesSearch =
       t.note.toLowerCase().includes(searchQuery.toLowerCase()) ||

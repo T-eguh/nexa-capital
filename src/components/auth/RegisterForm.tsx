@@ -10,12 +10,19 @@ interface RegisterFormProps {
 }
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchToLogin }) => {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    referralCode: '',
+  const [formData, setFormData] = useState(() => {
+    let initialRef = '';
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      initialRef = urlParams.get('ref') || '';
+    }
+    return {
+      fullName: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
+      referralCode: initialRef,
+    };
   });
 
   const [acceptTerms, setAcceptTerms] = useState(true);
@@ -174,22 +181,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
       {/* 2. Nomor ponsel */}
       <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="block text-xs font-bold text-slate-300">Nomor ponsel</label>
-          {phoneValidation?.isValid && phoneValidation.provider && (
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center space-x-1 animate-fadeIn">
-              <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-              <span>{phoneValidation.provider}</span>
-            </span>
-          )}
-        </div>
-        <div className={`flex items-center bg-slate-950/80 border rounded-2xl px-3.5 py-2.5 text-sm text-white transition-all shadow-inner ${
-          phoneValidation?.isValid
-            ? 'border-emerald-500/60 focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20'
-            : formData.phone.length > 5 && !phoneValidation?.isValid
-            ? 'border-amber-500/60 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20'
-            : 'border-slate-800 focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20'
-        }`}>
+        <label className="block text-xs font-bold text-slate-300 mb-1">Nomor ponsel</label>
+        <div className="flex items-center bg-slate-950/80 border border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-white focus-within:border-amber-500 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all shadow-inner">
           <span className="font-bold text-amber-400 pr-3 border-r border-slate-800 mr-3 text-sm flex items-center shrink-0">
             +62
           </span>
@@ -200,18 +193,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             onChange={handleChange}
             placeholder="81234567890"
             maxLength={14}
-            className="w-full bg-transparent text-sm font-medium text-slate-100 focus:outline-none placeholder:text-slate-600 font-mono tracking-wide"
+            className="w-full bg-transparent text-sm font-medium text-slate-100 focus:outline-none placeholder:text-slate-600"
             required
           />
-          {formData.phone && (
-            <span className="text-[10px] text-slate-500 font-mono ml-2 shrink-0">
-              {formData.phone.replace(/^0+/, '').length} digit
-            </span>
-          )}
         </div>
-        <p className="text-[10px] text-slate-500 mt-1">
-          Gunakan nomor WhatsApp aktif (Telkomsel, Indosat, XL, Axis, Tri, Smartfren).
-        </p>
       </div>
 
       {/* 3. Kata sandi & Konfirmasi (Side-by-side Grid 2 columns) */}
@@ -263,17 +248,30 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
 
       {/* 4. Kode referral (opsional) */}
       <div>
-        <label className="block text-xs font-bold text-slate-300 mb-1">
-          Kode referral <span className="text-slate-500 font-normal">(opsional)</span>
-        </label>
-        <input
-          type="text"
-          name="referralCode"
-          value={formData.referralCode}
-          onChange={handleChange}
-          placeholder="Masukkan kode referral"
-          className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all shadow-inner font-medium uppercase"
-        />
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-xs font-bold text-slate-300">
+            Kode referral <span className="text-slate-500 font-normal">(opsional)</span>
+          </label>
+          {formData.referralCode && (
+            <button
+              type="button"
+              onClick={() => setFormData((prev) => ({ ...prev, referralCode: '' }))}
+              className="text-[10px] text-rose-400 hover:text-rose-300 hover:underline cursor-pointer"
+            >
+              Hapus Referral
+            </button>
+          )}
+        </div>
+        <div className="relative">
+          <input
+            type="text"
+            name="referralCode"
+            value={formData.referralCode}
+            onChange={handleChange}
+            placeholder="Masukkan kode referral (opsional)"
+            className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all shadow-inner font-medium uppercase"
+          />
+        </div>
       </div>
 
       {/* Checkbox Terms */}

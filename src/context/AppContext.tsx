@@ -460,7 +460,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       totalProfitEarned: 0,
       totalReferralCommission: 0,
       referralCode: newRefCode,
-      referredBy: data.referralCode || undefined,
+      referredBy: data.referralCode?.trim() || undefined,
       vipLevel: 'VIP 0',
       isLockedOut: false,
       registeredAt: new Date().toISOString(),
@@ -478,9 +478,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       totalProfitEarned: 0,
       totalReferralCommission: 0,
       referralCode: newRefCode,
-      referredBy: data.referralCode || undefined,
+      referredBy: data.referralCode?.trim() || undefined,
       vipLevel: 'VIP 0',
     };
+
+    // If registered with a referral code, add to the upline's downline list
+    if (data.referralCode?.trim()) {
+      const uplineCode = data.referralCode.trim().toUpperCase();
+      const uplineUser = registeredUsers.find(
+        (u) => u.referralCode && u.referralCode.trim().toUpperCase() === uplineCode
+      );
+
+      const newDownline: DownlineUser = {
+        id: `down-${Date.now()}`,
+        name: data.name.trim(),
+        email: newRegUser.email,
+        joinDate: new Date().toISOString().split('T')[0],
+        totalSpent: 0,
+        commissionEarned: 0,
+        level: 1,
+        uplineReferralCode: uplineCode,
+        uplineId: uplineUser?.id,
+      };
+      setDownlines((prev) => [newDownline, ...prev]);
+    }
 
     setRegisteredUsers((prev) => [newRegUser, ...prev]);
     setUser(newUserProfile);
@@ -689,57 +710,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setTransactions((prev) => [newTx, ...prev]);
 
-    // 3-LEVEL REFERRAL COMMISSION SYSTEM (Directly Auto-credited to Saldo Penarikan)
+    // 3-LEVEL REFERRAL COMMISSION SYSTEM (Directly Auto-credited to Upline's Saldo Penarikan)
     const lvl1Pct = platformSettings.referralLvl1Pct || 32;
-    const lvl2Pct = platformSettings.referralLvl2Pct || 2;
-    const lvl3Pct = platformSettings.referralLvl3Pct || 1;
-
     const commissionLvl1 = Math.round(product.price * (lvl1Pct / 100));
-    const commissionLvl2 = Math.round(product.price * (lvl2Pct / 100));
-    const commissionLvl3 = Math.round(product.price * (lvl3Pct / 100));
 
-    const refTxLvl1: Transaction = {
-      id: generateUniqueTxId('tx-ref-l1'),
-      userId: user.id,
-      type: 'REFERRAL_COMMISSION',
-      amount: commissionLvl1,
-      status: 'APPROVED',
-      note: `Komisi Referral Lvl 1 (${lvl1Pct}%) dari pembelian ${product.name} (Langsung Masuk Saldo Penarikan)`,
-      date: new Date().toISOString(),
-      referralLevel: 1,
-    };
+    if (user.referredBy) {
+      const uplineCode = user.referredBy.trim().toUpperCase();
+      const uplineUser = registeredUsers.find(
+        (u) => u.referralCode && u.referralCode.trim().toUpperCase() === uplineCode
+      );
 
-    const refTxLvl2: Transaction = {
-      id: generateUniqueTxId('tx-ref-l2'),
-      userId: user.id,
-      type: 'REFERRAL_COMMISSION',
-      amount: commissionLvl2,
-      status: 'APPROVED',
-      note: `Komisi Referral Lvl 2 (${lvl2Pct}%) dari pembelian ${product.name}`,
-      date: new Date().toISOString(),
-      referralLevel: 2,
-    };
+      if (uplineUser) {
+        // Credit upline in registeredUsers
+        setRegisteredUsers((prev) =>
+          prev.map((u) =>
+            u.id === uplineUser.id
+              ? {
+                  ...u,
+                  saldoPenarikan: (u.saldoPenarikan || 0) + commissionLvl1,
+                  totalReferralCommission: (u.totalReferralCommission || 0) + commissionLvl1,
+                }
+              : u
+          )
+        );
 
-    const refTxLvl3: Transaction = {
-      id: generateUniqueTxId('tx-ref-l3'),
-      userId: user.id,
-      type: 'REFERRAL_COMMISSION',
-      amount: commissionLvl3,
-      status: 'APPROVED',
-      note: `Komisi Referral Lvl 3 (${lvl3Pct}%) dari pembelian ${product.name}`,
-      date: new Date().toISOString(),
-      referralLevel: 3,
-    };
+        // Transaction log for Upline
+        const refTxLvl1: Transaction = {
+          id: generateUniqueTxId('tx-ref-l1'),
+          userId: uplineUser.id,
+          type: 'REFERRAL_COMMISSION',
+          amount: commissionLvl1,
+          status: 'APPROVED',
+          note: `Komisi Referral Lvl 1 (${lvl1Pct}%) dari ${user.name} (Beli ${product.name})`,
+          date: new Date().toISOString(),
+          referralLevel: 1,
+        };
+        setTransactions((prev) => [refTxLvl1, ...prev]);
 
-    setTransactions((prev) => [refTxLvl1, refTxLvl2, refTxLvl3, ...prev]);
-
-    // Credit Level 1 referral commission directly to user saldoPenarikan
-    setUser((prev) => ({
-      ...prev,
-      saldoPenarikan: prev.saldoPenarikan + commissionLvl1,
-      balance: prev.saldoPenarikan + commissionLvl1,
-      totalReferralCommission: prev.totalReferralCommission + commissionLvl1,
-    }));
+        // Update downlines progress
+        setDownlines((prev) =>
+          prev.map((d) =>
+            d.uplineReferralCode === uplineCode && (d.name === user.name || d.email === user.email)
+              ? {
+                  ...d,
+                  totalSpent: (d.totalSpent || 0) + product.price,
+                  commissionEarned: (d.commissionEarned || 0) + commissionLvl1,
+                }
+              : d
+          )
+        );
+      }
+    }
 
     triggerConfetti();
     addNotification(`Berhasil membeli ${product.name}! Profit akan otomatis berjalan.`, 'success');
@@ -939,14 +960,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
-  // Request Deposit (Min 50k, Max 10jt)
+  // Request Deposit (Min 30k default from settings, Max 50jt)
   const requestDeposit = (amount: number, paymentMethod: string, proofUrl?: string) => {
-    if (amount < 50000) {
-      addNotification('Minimal deposit adalah Rp 50.000', 'error');
+    const minDep = platformSettings.minDeposit || 30000;
+    const maxDep = platformSettings.maxDeposit || 50000000;
+    if (amount < minDep) {
+      addNotification(`Minimal deposit adalah Rp ${minDep.toLocaleString('id-ID')}`, 'error');
       return;
     }
-    if (amount > 10000000) {
-      addNotification('Maksimal deposit adalah Rp 10.000.000 per transaksi', 'error');
+    if (amount > maxDep) {
+      addNotification(`Maksimal deposit adalah Rp ${maxDep.toLocaleString('id-ID')} per transaksi`, 'error');
       return;
     }
 
@@ -1055,12 +1078,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((t) => (t.id === transactionId ? { ...t, status: 'APPROVED' } : t))
     );
 
-    // Increase user saldoPenarikan
-    setUser((prev) => ({
-      ...prev,
-      saldoPenarikan: prev.saldoPenarikan + tx.amount,
-      balance: prev.saldoPenarikan + tx.amount,
-    }));
+    // Update registeredUsers array
+    setRegisteredUsers((prev) =>
+      prev.map((u) => {
+        if (u.id === tx.userId) {
+          const newSaldo = (u.saldoPenarikan || 0) + tx.amount;
+          return { ...u, saldoPenarikan: newSaldo };
+        }
+        return u;
+      })
+    );
+
+    // Increase user saldoPenarikan if active user matches
+    setUser((prev) => {
+      if (prev.id === tx.userId) {
+        const newSaldo = (prev.saldoPenarikan || 0) + tx.amount;
+        return {
+          ...prev,
+          saldoPenarikan: newSaldo,
+          balance: newSaldo,
+        };
+      }
+      return prev;
+    });
 
     addNotification(`Deposit Rp ${tx.amount.toLocaleString('id-ID')} telah disetujui admin!`, 'success');
   };
@@ -1087,12 +1127,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.map((t) => (t.id === transactionId ? { ...t, status: 'REJECTED' } : t))
     );
 
-    // Refund held user saldoPenarikan
-    setUser((prev) => ({
-      ...prev,
-      saldoPenarikan: prev.saldoPenarikan + tx.amount,
-      balance: prev.saldoPenarikan + tx.amount,
-    }));
+    // Refund held user saldoPenarikan in registeredUsers
+    setRegisteredUsers((prev) =>
+      prev.map((u) => {
+        if (u.id === tx.userId) {
+          const refunded = (u.saldoPenarikan || 0) + tx.amount;
+          return { ...u, saldoPenarikan: refunded };
+        }
+        return u;
+      })
+    );
+
+    // Refund active user if matching
+    setUser((prev) => {
+      if (prev.id === tx.userId) {
+        const refunded = (prev.saldoPenarikan || 0) + tx.amount;
+        return {
+          ...prev,
+          saldoPenarikan: refunded,
+          balance: refunded,
+        };
+      }
+      return prev;
+    });
 
     addNotification('Penarikan ditolak admin. Saldo telah dikembalikan ke akun.', 'info');
   };

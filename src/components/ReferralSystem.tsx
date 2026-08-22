@@ -55,7 +55,13 @@ export const ReferralSystem: React.FC = () => {
     window.open(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const totalCommission = downlines.reduce((acc, curr) => acc + curr.commissionEarned, 0);
+  const userDownlines = downlines.filter(
+    (d) =>
+      d.uplineReferralCode?.toUpperCase() === user.referralCode?.toUpperCase() ||
+      d.uplineId === user.id
+  );
+
+  const totalCommission = userDownlines.reduce((acc, curr) => acc + curr.commissionEarned, 0);
 
   return (
     <div className="space-y-6 pb-12">
@@ -224,14 +230,14 @@ export const ReferralSystem: React.FC = () => {
       {/* Referral Statistics */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
         <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4">
-          Statistik & Daftar Teman Terundang ({downlines.length})
+          Statistik & Daftar Teman Terundang ({userDownlines.length})
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
           <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
             <span className="text-xs text-slate-700 dark:text-slate-200 font-bold uppercase block">Total Member Terundang</span>
             <span className="text-2xl font-extrabold text-slate-900 dark:text-white mt-1 block">
-              {downlines.length} Member
+              {userDownlines.length} Member
             </span>
           </div>
 
@@ -243,57 +249,67 @@ export const ReferralSystem: React.FC = () => {
           </div>
         </div>
 
-        {/* Downline Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 uppercase font-extrabold border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="px-4 py-3.5">Nama Member</th>
-                <th className="px-4 py-3.5">Level Referral</th>
-                <th className="px-4 py-3.5">Tanggal Bergabung</th>
-                <th className="px-4 py-3.5 text-right">Total Transaksi</th>
-                <th className="px-4 py-3.5 text-right">Komisi Anda</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 dark:divide-slate-700/60">
-              {downlines.map((d) => {
-                const lvl = d.level || 1;
-                return (
-                  <tr key={d.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors">
-                    <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">{d.name}</td>
-                    <td className="px-4 py-3">
-                      {lvl === 1 && (
-                        <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-amber-400 text-slate-950 inline-flex items-center gap-1 shadow-sm">
-                          <Sparkles className="w-3 h-3" />
-                          <span>Level 1 (32%)</span>
-                        </span>
-                      )}
-                      {lvl === 2 && (
-                        <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-blue-600 text-white inline-flex items-center gap-1 shadow-sm">
-                          <Zap className="w-3 h-3" />
-                          <span>Level 2 (2%)</span>
-                        </span>
-                      )}
-                      {lvl === 3 && (
-                        <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-purple-600 text-white inline-flex items-center gap-1 shadow-sm">
-                          <Award className="w-3 h-3" />
-                          <span>Level 3 (1%)</span>
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200">{d.joinDate}</td>
-                    <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-white">
-                      Rp {d.totalSpent.toLocaleString('id-ID')}
-                    </td>
-                    <td className="px-4 py-3 text-right font-black text-emerald-600 dark:text-emerald-400 text-sm">
-                      +Rp {d.commissionEarned.toLocaleString('id-ID')}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        {/* Downline Table or Empty State */}
+        {userDownlines.length === 0 ? (
+          <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 space-y-2">
+            <Users className="w-8 h-8 text-slate-400 mx-auto" />
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Belum ada member terundang</p>
+            <p className="text-xs text-slate-500">
+              Bagikan link referral Anda di atas ke teman atau media sosial untuk mulai menerima komisi instan 3-Level!
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100 uppercase font-extrabold border-b border-slate-200 dark:border-slate-700">
+                <tr>
+                  <th className="px-4 py-3.5">Nama Member</th>
+                  <th className="px-4 py-3.5">Level Referral</th>
+                  <th className="px-4 py-3.5">Tanggal Bergabung</th>
+                  <th className="px-4 py-3.5 text-right">Total Transaksi</th>
+                  <th className="px-4 py-3.5 text-right">Komisi Anda</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700/60">
+                {userDownlines.map((d) => {
+                  const lvl = d.level || 1;
+                  return (
+                    <tr key={d.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors">
+                      <td className="px-4 py-3 font-bold text-slate-900 dark:text-white">{d.name}</td>
+                      <td className="px-4 py-3">
+                        {lvl === 1 && (
+                          <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-amber-400 text-slate-950 inline-flex items-center gap-1 shadow-sm">
+                            <Sparkles className="w-3 h-3" />
+                            <span>Level 1 ({lvl1}%)</span>
+                          </span>
+                        )}
+                        {lvl === 2 && (
+                          <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-blue-600 text-white inline-flex items-center gap-1 shadow-sm">
+                            <Zap className="w-3 h-3" />
+                            <span>Level 2 ({lvl2}%)</span>
+                          </span>
+                        )}
+                        {lvl === 3 && (
+                          <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-purple-600 text-white inline-flex items-center gap-1 shadow-sm">
+                            <Award className="w-3 h-3" />
+                            <span>Level 3 ({lvl3}%)</span>
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-200">{d.joinDate}</td>
+                      <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-white">
+                        Rp {d.totalSpent.toLocaleString('id-ID')}
+                      </td>
+                      <td className="px-4 py-3 text-right font-black text-emerald-600 dark:text-emerald-400 text-sm">
+                        +Rp {d.commissionEarned.toLocaleString('id-ID')}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
