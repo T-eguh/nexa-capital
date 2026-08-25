@@ -1,6 +1,7 @@
 import React from 'react';
-import { Download, Copy, Check, ShieldCheck, Sparkles, QrCode } from 'lucide-react';
-import { generateDynamicQris, getQrisQrImageUrl } from '../utils/qrisGenerator';
+import { QRCodeSVG } from 'qrcode.react';
+import { Download, Copy, Check, ShieldCheck, Zap } from 'lucide-react';
+import { generateDynamicQris } from '../utils/qrisGenerator';
 
 interface OfficialQrisCardProps {
   amount?: number;
@@ -24,28 +25,15 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
   showAmount = true,
 }) => {
   const [copied, setCopied] = React.useState(false);
+  const qrCardRef = React.useRef<HTMLDivElement>(null);
 
-  // Official ASPI QRIS standard base string for CAPITAL CELL, BNDNG KD (NMID: ID1026565672916)
-  const baseQrisString = '00020101021126590014ID.LINKAJA.WWW01189360091410265656720215ID10265656729160303UMI51440014ID.LINKAJA.WWW01189360091410265656720215ID10265656729165204581253033605802ID5922CAPITAL CELL, BNDNG KD6007BANDUNG61054011562070703A0163046C49';
+  // Exact 100% Valid ASPI Base QRIS payload for CAPITAL CELL, BNDNG KD
+  const officialBasePayload = '00020101021126660014ID.LINKAJA.WWW01189360091410265656720215ID10265656729160303UMI51590014ID.LINKAJA.WWW01189360091410265656720215ID10265656729165204581253033605802ID5922CAPITAL CELL, BNDNG KD6007BANDUNG61054011562070703A0163047906';
 
-  // If amount is provided, generate dynamic QRIS with exact amount embedded (tag 54) so m-banking fills nominal automatically!
-  const qrImageSrc = React.useMemo(() => {
-    if (qrImageUrl && qrImageUrl.startsWith('data:image')) {
-      return qrImageUrl;
-    }
-    if (amount && amount > 0) {
-      try {
-        const dynamicPayload = generateDynamicQris(baseQrisString, amount);
-        return getQrisQrImageUrl(dynamicPayload);
-      } catch (err) {
-        console.warn('Fallback static QRIS generation:', err);
-      }
-    }
-    return (
-      qrImageUrl?.trim() ||
-      `https://api.qrserver.com/v1/create-qr-code/?size=450x450&data=00020101021126590014ID.LINKAJA.WWW01189360091410265656720215ID10265656729160303UMI51440014ID.LINKAJA.WWW01189360091410265656720215ID10265656729165204581253033605802ID5922CAPITAL+CELL%2C+BNDNG+KD6007BANDUNG61054011562070703A0163046C49&margin=10`
-    );
-  }, [amount, qrImageUrl]);
+  // Compute Dynamic QRIS string with Tag 54 (Amount) embedded so m-banking fills nominal automatically
+  const dynamicPayload = React.useMemo(() => {
+    return generateDynamicQris(officialBasePayload, amount);
+  }, [amount]);
 
   const handleCopyAmount = () => {
     if (amount) {
@@ -60,17 +48,34 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
       onDownload();
       return;
     }
-    const link = document.createElement('a');
-    link.href = qrImageSrc;
-    link.download = `QRIS_NEXA_CAPITAL_CELL_${amount || 'DEPOSIT'}.png`;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    
+    // Download direct high-res canvas from SVG
+    const svgElement = qrCardRef.current?.querySelector('svg');
+    if (svgElement) {
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.onload = () => {
+        canvas.width = 1000;
+        canvas.height = 1000;
+        if (ctx) {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 50, 50, 900, 900);
+          const pngFile = canvas.toDataURL('image/png');
+          const downloadLink = document.createElement('a');
+          downloadLink.download = `QRIS_DYNAMIC_CAPITAL_CELL_${amount || 'DEPOSIT'}.png`;
+          downloadLink.href = pngFile;
+          downloadLink.click();
+        }
+      };
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    }
   };
 
   return (
-    <div className="w-full max-w-sm mx-auto select-none">
+    <div ref={qrCardRef} className="w-full max-w-sm mx-auto select-none">
       {/* Authentic ASPI Standard Indonesian QRIS Card Layout */}
       <div className="bg-white rounded-3xl p-5 shadow-2xl border border-slate-200 text-slate-900 relative overflow-hidden">
         {/* Red Decorative Geometry Header & Footer */}
@@ -82,6 +87,9 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
           <div className="flex flex-col">
             <div className="flex items-center space-x-1.5">
               <span className="font-black text-2xl tracking-tighter text-slate-950">QRIS</span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
+                DINAMIS
+              </span>
             </div>
             <span className="text-[8px] font-bold text-slate-600 tracking-tight">
               QR Code Standar Pembayaran Nasional
@@ -108,15 +116,25 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
           </p>
         </div>
 
-        {/* QR Code Frame */}
+        {/* QR Code Frame - Pixel-Perfect Direct Dynamic Vector Rendering */}
         <div className="relative z-10 flex justify-center my-2">
-          <div className="p-2 bg-white rounded-2xl border-2 border-slate-900 shadow-inner">
-            <img
-              src={qrImageSrc}
-              alt={`QRIS ${merchantName}`}
-              className="w-56 h-56 object-contain rounded-lg"
-              loading="eager"
-            />
+          <div className="p-3 bg-white rounded-2xl border-2 border-slate-900 shadow-inner flex items-center justify-center">
+            {qrImageUrl && qrImageUrl.startsWith('data:image') ? (
+              <img
+                src={qrImageUrl}
+                alt={`QRIS ${merchantName}`}
+                className="w-56 h-56 object-contain rounded-lg"
+                loading="eager"
+              />
+            ) : (
+              <QRCodeSVG
+                value={dynamicPayload}
+                size={220}
+                level="M"
+                includeMargin={false}
+                className="w-56 h-56"
+              />
+            )}
           </div>
         </div>
 
@@ -130,6 +148,19 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
           </span>
         </div>
 
+        {/* Dynamic Amount Status Banner */}
+        {amount && amount > 0 && (
+          <div className="my-2 p-2 bg-emerald-50 rounded-xl border border-emerald-200 text-center relative z-10">
+            <p className="text-[10px] font-extrabold text-emerald-800 flex items-center justify-center gap-1">
+              <Zap className="w-3 h-3 text-emerald-600 fill-emerald-600" />
+              <span>Nominal Otomatis: Rp {amount.toLocaleString('id-ID')}</span>
+            </p>
+            <p className="text-[8px] text-emerald-600 font-medium">
+              Aplikasi M-Banking akan langsung menampilkan angka di atas tanpa ketik manual
+            </p>
+          </div>
+        )}
+
         {/* Footer Meta Details */}
         <div className="flex justify-between items-end text-[8px] text-slate-600 pt-2 border-t border-slate-100 relative z-10">
           <div>
@@ -138,7 +169,7 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
           </div>
           <div className="text-right">
             <p className="font-bold text-slate-800">Buka M-Banking / E-Wallet</p>
-            <p className="text-emerald-700 font-semibold">Scan &gt; Bayar Otomatis</p>
+            <p className="text-emerald-700 font-semibold">Scan &gt; Langsung Bayar</p>
           </div>
         </div>
       </div>
@@ -196,3 +227,4 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
     </div>
   );
 };
+
