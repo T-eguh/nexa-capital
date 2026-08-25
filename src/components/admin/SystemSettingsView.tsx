@@ -37,18 +37,57 @@ export const SystemSettingsView: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Ukuran foto terlalu besar. Maksimal ukuran 5 MB.');
-      return;
-    }
-
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
-        handleChange(field, reader.result as string);
+        const img = new Image();
+        img.onload = () => {
+          // Compress using canvas to ensure small size (<60KB) and prevent LocalStorage quota error
+          const canvas = document.createElement('canvas');
+          const maxDim = 500;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressed = canvas.toDataURL('image/jpeg', 0.8);
+            handleChange(field, compressed);
+          } else {
+            handleChange(field, reader.result as string);
+          }
+        };
+        img.src = reader.result;
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const applyCapitalCellQrisPreset = () => {
+    const capitalCellUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=450x450&data=00020101021126590014ID.LINKAJA.WWW01189360091410265656720215ID10265656729160303UMI51440014ID.LINKAJA.WWW01189360091410265656720215ID10265656729165204581253033605802ID5922CAPITAL+CELL%2C+BNDNG+KD6007BANDUNG61054011562070703A0163046C49&margin=8';
+    setFormData((prev) => ({
+      ...prev,
+      qris1Name: 'QRIS 1 (CAPITAL CELL 24 Jam)',
+      qris1Detail: 'BCA, DANA, OVO, ShopeePay, Mandiri, BRI & Semua Bank',
+      qris1ImageUrl: capitalCellUrl,
+      qris1Enabled: true,
+      qris2Name: 'QRIS 2 (CAPITAL CELL Backup 24 Jam)',
+      qris2Detail: 'Semua Aplikasi E-Wallet & M-Banking Nasional',
+      qris2ImageUrl: capitalCellUrl,
+      qris2Enabled: true,
+    }));
   };
 
   // Sync if context updates
@@ -251,6 +290,31 @@ export const SystemSettingsView: React.FC = () => {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Quick Preset Banner */}
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/60 to-slate-900 border border-emerald-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/30">
+                <QrCode className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="font-extrabold text-white text-xs block">
+                  Barcode Resmi Merchant: CAPITAL CELL (NMID: ID1026565672916)
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  Gunakan template barcode resmi ASPI nasional standar perbankan & e-wallet untuk QRIS 1 & QRIS 2.
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={applyCapitalCellQrisPreset}
+              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all active:scale-95 shrink-0 cursor-pointer"
+            >
+              ⚡ Terapkan Barcode CAPITAL CELL Otomatis
+            </button>
           </div>
 
           {/* QRIS 1 & QRIS 2 Configurations */}

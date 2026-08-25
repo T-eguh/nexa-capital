@@ -13,10 +13,13 @@ import {
   CheckCircle2,
   Loader2,
   AlertCircle,
+  Copy,
+  Download,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { generateDynamicQris, getQrisQrImageUrl } from '../utils/qrisGenerator';
+import { OfficialQrisCard } from './OfficialQrisCard';
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -407,61 +410,59 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
         {/* STEP 2: SIMULATED INSTANT PAYMENT GATEWAY INTERACTION */}
         {gatewayStep === 'PAYMENT_PENDING' && (
           <div className="space-y-4 animate-fadeIn">
-            <div className="p-4 rounded-2xl bg-slate-950 border border-emerald-500/30 text-center space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <span className="text-xs font-mono text-slate-400">Ref: {createdRefNo}</span>
-                <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-400 text-[11px] font-extrabold flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 animate-pulse" />
-                  <span>Sisa Waktu: {formatCountdown(countdownSeconds)}</span>
-                </span>
+            {/* Header Status & Countdown */}
+            <div className="flex items-center justify-between bg-slate-950 p-3 rounded-2xl border border-slate-800">
+              <div>
+                <span className="text-[10px] text-slate-400 block font-mono">Kode Referensi:</span>
+                <span className="text-xs font-mono font-bold text-white">{createdRefNo}</span>
               </div>
-
-              {/* QR Code Dynamic Box */}
-              <div className="space-y-2">
-                <span className="text-xs text-slate-300 block font-bold">
-                  Scan Barcode {currentQrisName}:
-                </span>
-                <div className="w-48 h-48 bg-white p-2 rounded-2xl mx-auto flex items-center justify-center shadow-lg border border-slate-700">
-                  <img
-                    src={currentQrisImage}
-                    alt={currentQrisName}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <span className="text-[10px] text-emerald-400 font-bold block">
-                  Support BCA, Mandiri, BRI, BNI, DANA, OVO, GoPay, ShopeePay & Semua Bank
-                </span>
-              </div>
-
-              <div className="p-3 bg-slate-900 rounded-xl text-left text-xs space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Total Pembayaran:</span>
-                  <span className="font-black text-emerald-400">Rp {amountToDeposit.toLocaleString('id-ID')}</span>
-                </div>
-                <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-500">Jalur Terpilih:</span>
-                  <span className="text-slate-300 font-bold">{currentQrisName}</span>
-                </div>
+              <div className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-400 text-[11px] font-extrabold flex items-center gap-1.5 border border-amber-500/30">
+                <Clock className="w-3.5 h-3.5 animate-pulse" />
+                <span>Batas Waktu: {formatCountdown(countdownSeconds)}</span>
               </div>
             </div>
 
-            {/* ACTION TO TEST AUTOMATIC CALLBACK */}
+            {/* Official QRIS Poster Card */}
+            <OfficialQrisCard
+              amount={amountToDeposit}
+              qrImageUrl={currentQrisImage}
+              merchantName="CAPITAL CELL, BNDNG KD"
+              nmid="ID1026565672916"
+              terminalId="A01"
+              printId="93600914"
+            />
+
+            {/* Quick Step Guide */}
+            <div className="p-3.5 bg-slate-950 rounded-2xl border border-emerald-500/20 space-y-2 text-xs">
+              <span className="font-extrabold text-emerald-400 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4" />
+                <span>Petunjuk Pembayaran QRIS Otomatis:</span>
+              </span>
+              <ol className="list-decimal list-inside text-slate-300 text-[11px] space-y-1 pl-1">
+                <li>Buka aplikasi <strong>BCA Mobile, DANA, OVO, GoPay, ShopeePay, Mandiri, BRI</strong> atau perbankan Anda.</li>
+                <li>Pilih <strong>Scan QR / Bayar</strong> & arahkan kamera ke barcode di atas (atau unggah dari galeri).</li>
+                <li>Pastikan nama merchant tertera <strong>CAPITAL CELL, BNDNG KD</strong>.</li>
+                <li>Setelah berhasil mentransfer, klik tombol <strong>"Saya Sudah Bayar (Konfirmasi)"</strong> di bawah.</li>
+              </ol>
+            </div>
+
+            {/* ACTION BUTTONS */}
             <div className="space-y-2 pt-1">
               <button
                 type="button"
                 disabled={isProcessingGateway}
                 onClick={handleSimulatePaymentCallback}
-                className="w-full py-3.5 rounded-2xl font-black text-xs text-slate-950 shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-2 bg-emerald-400 hover:bg-emerald-300 disabled:opacity-50 cursor-pointer"
+                className="w-full py-3.5 rounded-2xl font-black text-xs text-slate-950 shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 hover:from-emerald-300 hover:to-teal-300 disabled:opacity-50 cursor-pointer"
               >
                 {isProcessingGateway ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
-                    <span>Mendeteksi Pembayaran Gateway...</span>
+                    <span>Mengecek & Menyimpan Pengajuan Deposit...</span>
                   </>
                 ) : (
                   <>
                     <Zap className="w-4 h-4 fill-current text-slate-950" />
-                    <span>KONFIRMASI SUDAH BAYAR / CEK STATUS</span>
+                    <span>SAYA SUDAH BAYAR (KONFIRMASI DEPOSIT)</span>
                   </>
                 )}
               </button>
@@ -471,7 +472,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                 onClick={() => setGatewayStep('SELECT')}
                 className="w-full py-2.5 rounded-xl font-bold text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
               >
-                Kembali & Ubah Metode
+                Ganti Jalur / Ubah Nominal
               </button>
             </div>
           </div>

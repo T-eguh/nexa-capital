@@ -18,7 +18,7 @@ import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 
 export const ReferralSystem: React.FC = () => {
-  const { user, downlines, addNotification, platformSettings } = useApp();
+  const { user, downlines, registeredUsers, addNotification, platformSettings } = useApp();
   const { theme } = useTheme();
 
   const lvl1 = platformSettings?.referralLvl1Pct ?? 32;
@@ -55,13 +55,99 @@ export const ReferralSystem: React.FC = () => {
     window.open(`https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const userDownlines = downlines.filter(
-    (d) =>
-      d.uplineReferralCode?.toUpperCase() === user.referralCode?.toUpperCase() ||
-      d.uplineId === user.id
+  // 1. Find Level 1 registered users (referred directly by current user)
+  const l1Users = (registeredUsers || []).filter(
+    (u) =>
+      u.referredBy &&
+      user.referralCode &&
+      u.referredBy.trim().toUpperCase() === user.referralCode.trim().toUpperCase() &&
+      u.id !== user.id
   );
 
-  const totalCommission = userDownlines.reduce((acc, curr) => acc + curr.commissionEarned, 0);
+  // 2. Find Level 2 registered users (referred by Level 1 users)
+  const l1Codes = new Set(l1Users.map((u) => u.referralCode?.trim().toUpperCase()).filter(Boolean));
+  const l2Users = (registeredUsers || []).filter(
+    (u) => u.referredBy && l1Codes.has(u.referredBy.trim().toUpperCase()) && u.id !== user.id
+  );
+
+  // 3. Find Level 3 registered users (referred by Level 2 users)
+  const l2Codes = new Set(l2Users.map((u) => u.referralCode?.trim().toUpperCase()).filter(Boolean));
+  const l3Users = (registeredUsers || []).filter(
+    (u) => u.referredBy && l2Codes.has(u.referredBy.trim().toUpperCase()) && u.id !== user.id
+  );
+
+  // Build combined downline map
+  const downlineMap = new Map<string, any>();
+
+  // Add L1 registered users
+  l1Users.forEach((u) => {
+    const key = u.id || u.phone || u.email;
+    const spent = u.totalInvested || 0;
+    downlineMap.set(key, {
+      id: u.id,
+      name: u.fullName,
+      email: u.email,
+      phone: u.phone,
+      joinDate: u.registeredAt ? u.registeredAt.split('T')[0] : '2026-08-24',
+      totalSpent: spent,
+      commissionEarned: Math.round(spent * (lvl1 / 100)),
+      level: 1,
+      uplineReferralCode: user.referralCode,
+      uplineId: user.id,
+    });
+  });
+
+  // Add L2 registered users
+  l2Users.forEach((u) => {
+    const key = u.id || u.phone || u.email;
+    const spent = u.totalInvested || 0;
+    downlineMap.set(key, {
+      id: u.id,
+      name: u.fullName,
+      email: u.email,
+      phone: u.phone,
+      joinDate: u.registeredAt ? u.registeredAt.split('T')[0] : '2026-08-24',
+      totalSpent: spent,
+      commissionEarned: Math.round(spent * (lvl2 / 100)),
+      level: 2,
+      uplineReferralCode: u.referredBy,
+    });
+  });
+
+  // Add L3 registered users
+  l3Users.forEach((u) => {
+    const key = u.id || u.phone || u.email;
+    const spent = u.totalInvested || 0;
+    downlineMap.set(key, {
+      id: u.id,
+      name: u.fullName,
+      email: u.email,
+      phone: u.phone,
+      joinDate: u.registeredAt ? u.registeredAt.split('T')[0] : '2026-08-24',
+      totalSpent: spent,
+      commissionEarned: Math.round(spent * (lvl3 / 100)),
+      level: 3,
+      uplineReferralCode: u.referredBy,
+    });
+  });
+
+  // Merge any recorded downlines from context state
+  (downlines || []).forEach((d) => {
+    const isL1 = d.uplineReferralCode?.toUpperCase() === user.referralCode?.toUpperCase() || d.uplineId === user.id;
+    if (isL1) {
+      const key = d.id || d.name || d.email;
+      const existing = downlineMap.get(key);
+      if (existing) {
+        existing.totalSpent = Math.max(existing.totalSpent, d.totalSpent || 0);
+        existing.commissionEarned = Math.max(existing.commissionEarned, d.commissionEarned || 0);
+      } else {
+        downlineMap.set(key, d);
+      }
+    }
+  });
+
+  const userDownlines = Array.from(downlineMap.values());
+  const totalCommission = userDownlines.reduce((acc, curr) => acc + (curr.commissionEarned || 0), 0);
 
   return (
     <div className="space-y-6 pb-12">

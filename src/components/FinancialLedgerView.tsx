@@ -24,45 +24,53 @@ export const FinancialLedgerView: React.FC = () => {
   const [filterType, setFilterType] = useState<string>('ALL');
   const [filterWallet, setFilterWallet] = useState<string>('ALL');
 
-  const { transactions } = useApp();
+  const { transactions, user, isAdminMode } = useApp();
 
   const fetchLedger = async () => {
     setLoading(true);
     try {
       const res = await apiClient.get('/payments/ledger');
       if (res.data && res.data.ledger && res.data.ledger.length > 0) {
-        setLedgerEntries(res.data.ledger);
-      } else if (transactions && transactions.length > 0) {
-        // Fallback to local transactions formatted as ledger
-        const localLedger = transactions.map((tx) => ({
+        const entries = isAdminMode
+          ? res.data.ledger
+          : res.data.ledger.filter((item: any) => item.userId === user.id);
+        setLedgerEntries(entries);
+      } else {
+        const userTxs = isAdminMode
+          ? transactions
+          : transactions.filter((t) => t.userId === user.id);
+
+        const localLedger = userTxs.map((tx) => ({
           id: tx.id,
           referenceNo: tx.referenceNo || `TX-${tx.id}`,
-          type: tx.type === 'DEPOSIT' || tx.type === 'PROFIT_CLAIM' || tx.type === 'COMMISSION' ? 'CREDIT' : 'DEBIT',
+          type: tx.type === 'DEPOSIT' || tx.type === 'PROFIT_CLAIM' || tx.type === 'COMMISSION' || tx.type === 'REFERRAL_COMMISSION' || tx.type === 'DAILY_PROFIT' ? 'CREDIT' : 'DEBIT',
           walletType: 'MAIN',
           amount: tx.amount,
           balanceBefore: tx.balanceBefore || 0,
           balanceAfter: tx.balanceAfter || tx.amount,
-          description: tx.description || `${tx.type} Transaction`,
+          description: tx.note || tx.description || `${tx.type} Transaction`,
           createdAt: tx.date || new Date().toISOString(),
         }));
         setLedgerEntries(localLedger);
       }
     } catch (err) {
       console.warn('Financial ledger fetch fallback:', err);
-      if (transactions && transactions.length > 0) {
-        const localLedger = transactions.map((tx) => ({
-          id: tx.id,
-          referenceNo: tx.referenceNo || `TX-${tx.id}`,
-          type: tx.type === 'DEPOSIT' || tx.type === 'PROFIT_CLAIM' || tx.type === 'COMMISSION' ? 'CREDIT' : 'DEBIT',
-          walletType: 'MAIN',
-          amount: tx.amount,
-          balanceBefore: tx.balanceBefore || 0,
-          balanceAfter: tx.balanceAfter || tx.amount,
-          description: tx.description || `${tx.type} Transaction`,
-          createdAt: tx.date || new Date().toISOString(),
-        }));
-        setLedgerEntries(localLedger);
-      }
+      const userTxs = isAdminMode
+        ? transactions
+        : transactions.filter((t) => t.userId === user.id);
+
+      const localLedger = userTxs.map((tx) => ({
+        id: tx.id,
+        referenceNo: tx.referenceNo || `TX-${tx.id}`,
+        type: tx.type === 'DEPOSIT' || tx.type === 'PROFIT_CLAIM' || tx.type === 'COMMISSION' || tx.type === 'REFERRAL_COMMISSION' || tx.type === 'DAILY_PROFIT' ? 'CREDIT' : 'DEBIT',
+        walletType: 'MAIN',
+        amount: tx.amount,
+        balanceBefore: tx.balanceBefore || 0,
+        balanceAfter: tx.balanceAfter || tx.amount,
+        description: tx.note || tx.description || `${tx.type} Transaction`,
+        createdAt: tx.date || new Date().toISOString(),
+      }));
+      setLedgerEntries(localLedger);
     } finally {
       setLoading(false);
     }
@@ -70,7 +78,7 @@ export const FinancialLedgerView: React.FC = () => {
 
   useEffect(() => {
     fetchLedger();
-  }, []);
+  }, [transactions, user.id, isAdminMode]);
 
   const filteredEntries = ledgerEntries.filter((item) => {
     const matchesSearch =

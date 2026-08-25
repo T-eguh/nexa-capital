@@ -27,14 +27,14 @@ export const INITIAL_PLATFORM_SETTINGS: PlatformSettings = {
   
   // Channels Config
   qris1Enabled: true,
-  qris1Name: 'QRIS 1 (Utama 24 Jam)',
-  qris1Detail: 'BCA, DANA, OVO, ShopeePay, Mandiri & Semua Bank',
-  qris1ImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=00020101021126570014ID.LINKAJA.WWW01189360091438201948215204581253033605802ID5920NEXA+CAPITAL+QRIS16007JAKARTA61051234062070703A0163048B92',
+  qris1Name: 'QRIS 1 (CAPITAL CELL 24 Jam)',
+  qris1Detail: 'BCA, DANA, OVO, ShopeePay, Mandiri, BRI & Semua Bank',
+  qris1ImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=00020101021126590014ID.LINKAJA.WWW01189360091410265656720215ID10265656729160303UMI51440014ID.LINKAJA.WWW01189360091410265656720215ID10265656729165204581253033605802ID5922CAPITAL+CELL%2C+BNDNG+KD6007BANDUNG61054011562070703A0163046C49&margin=6',
   
   qris2Enabled: true,
-  qris2Name: 'QRIS 2 (Backup 24 Jam)',
+  qris2Name: 'QRIS 2 (CAPITAL CELL Backup 24 Jam)',
   qris2Detail: 'Semua Aplikasi e-Wallet & m-Banking Nasional',
-  qris2ImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=00020101021126570014ID.LINKAJA.WWW01189360091438201948225204581253033605802ID5920NEXA+CAPITAL+QRIS26007JAKARTA61051234062070703A0263044C73',
+  qris2ImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=00020101021126590014ID.LINKAJA.WWW01189360091410265656720215ID10265656729160303UMI51440014ID.LINKAJA.WWW01189360091410265656720215ID10265656729165204581253033605802ID5922CAPITAL+CELL%2C+BNDNG+KD6007BANDUNG61054011562070703A0163046C49&margin=6',
   
   bankTransferEnabled: false,
   bankMaintenanceMessage: 'Jalur Transfer Rekening Bank saat ini sedang MAINTENANCE SEMENTARA. Silakan gunakan jalur QRIS 1 atau QRIS 2 yang siap melayani deposit 24 jam nonstop.',
@@ -621,134 +621,29 @@ export const INITIAL_REGISTERED_USERS: RegisteredUser[] = [
 
 export const INITIAL_USER: UserProfile = {
   id: 'usr-88392',
-  name: 'Ahmad Rizky',
-  email: 'ahmad.rizky@example.com',
-  phone: '081298765432',
-  saldoPenarikan: 150000,
-  saldoProfit: 43750,
-  balance: 150000,
-  totalInvested: 150000,
-  totalProfitEarned: 56250,
-  totalReferralCommission: 16000,
-  referralCode: 'OJQA3T2VNW',
-  vipLevel: 'VIP 1',
+  name: 'Investor Nexa',
+  email: 'investor@nexacapital.id',
+  phone: '081234567890',
+  saldoPenarikan: 0,
+  saldoProfit: 0,
+  balance: 0,
+  totalInvested: 0,
+  totalProfitEarned: 0,
+  totalReferralCommission: 0,
+  referralCode: 'NX-VIP88',
+  vipLevel: 'VIP 0',
   bankAccount: {
     bankName: 'Bank Central Asia (BCA)',
-    accountNumber: '8820194821',
-    accountHolder: 'AHMAD RIZKY',
+    accountNumber: '',
+    accountHolder: '',
   },
 };
 
-export const INITIAL_USER_INVESTMENTS: UserInvestment[] = [
-  {
-    id: 'inv-101',
-    userId: 'usr-88392',
-    productId: 'prod-50k-35h',
-    productName: 'Paket Saham Perbankan BCA Dividend (Durasi 35H)',
-    amountInvested: 50000,
-    dailyProfit: 1250,
-    totalExpectedProfit: 43750,
-    profitEarned: 6250,
-    daysElapsed: 5,
-    totalDays: 35,
-    startDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    lastClaimDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'ACTIVE',
-    isLockable35H: true,
-  },
-  {
-    id: 'inv-102',
-    userId: 'usr-88392',
-    productId: 'prod-vip-3h',
-    productName: 'Paket Fast Yield VIP 1 (Durasi 3H)',
-    amountInvested: 100000,
-    dailyProfit: 5000,
-    totalExpectedProfit: 15000,
-    profitEarned: 10000,
-    daysElapsed: 2,
-    totalDays: 3,
-    startDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-    lastClaimDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'ACTIVE',
-    isLockable35H: false,
-  },
-];
+export const INITIAL_USER_INVESTMENTS: UserInvestment[] = [];
 
-export const INITIAL_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'tx-201',
-    userId: 'usr-88392',
-    type: 'DEPOSIT',
-    amount: 200000,
-    status: 'APPROVED',
-    note: 'Deposit saldo via QRIS Instant',
-    date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    paymentMethod: 'QRIS All Payment',
-  },
-  {
-    id: 'tx-202',
-    userId: 'usr-88392',
-    type: 'PRODUCT_PURCHASE',
-    amount: 50000,
-    status: 'SUCCESS',
-    note: 'Pembelian Paket Saham BCA Dividend (Durasi 35H)',
-    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'tx-204',
-    userId: 'usr-88392',
-    type: 'REFERRAL_COMMISSION',
-    amount: 16000,
-    status: 'APPROVED',
-    note: 'Komisi Referral Lvl 1 (32%) dari Budi Santoso (Beli Produk 50k)',
-    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    referralLevel: 1,
-  },
-  {
-    id: 'tx-205',
-    userId: 'usr-88392',
-    type: 'DAILY_PROFIT',
-    amount: 5000,
-    status: 'SUCCESS',
-    note: 'Profit Harian masuk ke Saldo Penarikan (Paket VIP 3H)',
-    date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
+export const INITIAL_TRANSACTIONS: Transaction[] = [];
 
-export const INITIAL_DOWNLINES: DownlineUser[] = [
-  {
-    id: 'down-1',
-    name: 'Budi Santoso',
-    email: 'budi.s@gmail.com',
-    joinDate: '2026-07-28',
-    totalSpent: 50000,
-    commissionEarned: 16000,
-    level: 1,
-    uplineReferralCode: 'OJQA3T2VNW',
-  },
-  {
-    id: 'down-2',
-    name: 'Dewi Lestari',
-    email: 'dewi.lestari@yahoo.com',
-    joinDate: '2026-08-01',
-    totalSpent: 100000,
-    commissionEarned: 2000,
-    level: 2,
-    uplineReferralCode: 'OJQA3T2VNW',
-  },
-  {
-    id: 'down-3',
-    name: 'Hendra Wijaya',
-    email: 'hendra_w@gmail.com',
-    joinDate: '2026-08-03',
-    totalSpent: 50000,
-    commissionEarned: 500,
-    level: 3,
-    uplineReferralCode: 'OJQA3T2VNW',
-  },
-];
+export const INITIAL_DOWNLINES: DownlineUser[] = [];
 
 export const INITIAL_TESTIMONIALS: Testimonial[] = [
   {
