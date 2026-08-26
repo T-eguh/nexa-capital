@@ -51,6 +51,19 @@ const MainAppContent: React.FC = () => {
   const { theme } = useTheme();
 
   useEffect(() => {
+    // Capture referral query parameter from URL immediately
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const incomingRef = urlParams.get('ref') || urlParams.get('referral') || urlParams.get('r') || urlParams.get('code') || urlParams.get('invite');
+      if (incomingRef && incomingRef.trim()) {
+        const cleanRef = incomingRef.trim().toUpperCase();
+        localStorage.setItem('pending_referral_code', cleanRef);
+        localStorage.setItem('nexainvest_pending_referral', cleanRef);
+      }
+    } catch (e) {
+      console.warn('Error reading URL referral parameters:', e);
+    }
+
     const handleUrlChange = () => {
       const path = window.location.pathname;
       const hash = window.location.hash;

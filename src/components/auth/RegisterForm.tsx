@@ -13,8 +13,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
   const [formData, setFormData] = useState(() => {
     let initialRef = '';
     if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      initialRef = urlParams.get('ref') || '';
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromUrl = urlParams.get('ref') || urlParams.get('referral') || urlParams.get('r') || urlParams.get('code') || urlParams.get('invite');
+        const fromStorage = localStorage.getItem('pending_referral_code') || localStorage.getItem('nexainvest_pending_referral');
+        initialRef = (fromUrl || fromStorage || '').trim().toUpperCase();
+      } catch (e) {
+        console.warn('Error reading initial referral code:', e);
+      }
     }
     return {
       fullName: '',
@@ -249,13 +255,24 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
       {/* 4. Kode referral (opsional) */}
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className="block text-xs font-bold text-slate-300">
-            Kode referral <span className="text-slate-500 font-normal">(opsional)</span>
+          <label className="block text-xs font-bold text-slate-300 flex items-center gap-1.5">
+            <span>Kode referral</span>
+            {formData.referralCode ? (
+              <span className="text-[10px] text-emerald-400 font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                ✓ Terdeteksi Aktif
+              </span>
+            ) : (
+              <span className="text-slate-500 font-normal">(opsional)</span>
+            )}
           </label>
           {formData.referralCode && (
             <button
               type="button"
-              onClick={() => setFormData((prev) => ({ ...prev, referralCode: '' }))}
+              onClick={() => {
+                setFormData((prev) => ({ ...prev, referralCode: '' }));
+                localStorage.removeItem('pending_referral_code');
+                localStorage.removeItem('nexainvest_pending_referral');
+              }}
               className="text-[10px] text-rose-400 hover:text-rose-300 hover:underline cursor-pointer"
             >
               Hapus Referral
@@ -268,10 +285,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
             name="referralCode"
             value={formData.referralCode}
             onChange={handleChange}
-            placeholder="Masukkan kode referral (opsional)"
-            className="w-full bg-slate-950/80 border border-slate-800 rounded-2xl px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all shadow-inner font-medium uppercase"
+            placeholder="Contoh: OJQA3T2VNW / NX-XXXX"
+            className={`w-full bg-slate-950/80 border rounded-2xl px-3.5 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none transition-all shadow-inner font-mono font-bold uppercase tracking-wider ${
+              formData.referralCode
+                ? 'border-emerald-500/60 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 text-emerald-300'
+                : 'border-slate-800 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
+            }`}
           />
         </div>
+        {formData.referralCode && (
+          <p className="text-[10px] text-emerald-400 mt-1 flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 text-emerald-400 shrink-0" />
+            <span>Akun Anda akan terhubung langsung ke tim pengundang: <strong>{formData.referralCode}</strong></span>
+          </p>
+        )}
       </div>
 
       {/* Checkbox Terms */}
