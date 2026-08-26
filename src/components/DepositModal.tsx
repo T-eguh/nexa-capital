@@ -27,7 +27,7 @@ interface DepositModalProps {
 }
 
 export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
-  const { platformSettings, requestDeposit, triggerConfetti, addNotification } = useApp();
+  const { platformSettings, requestDeposit, depositSuccessInstant, user, triggerConfetti, addNotification } = useApp();
   const { theme } = useTheme();
 
   const [selectedAmount, setSelectedAmount] = useState<number>(100000);
@@ -36,7 +36,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
   const [autoGatewayMethod, setAutoGatewayMethod] = useState<'QRIS_1' | 'QRIS_2'>('QRIS_1');
 
   // Auto gateway step state
-  const [gatewayStep, setGatewayStep] = useState<'SELECT' | 'PAYMENT_PENDING' | 'PENDING_APPROVAL'>('SELECT');
+  const [gatewayStep, setGatewayStep] = useState<'SELECT' | 'PAYMENT_PENDING' | 'PAYMENT_SUCCESS' | 'PENDING_APPROVAL'>('SELECT');
   const [isProcessingGateway, setIsProcessingGateway] = useState<boolean>(false);
   const [countdownSeconds, setCountdownSeconds] = useState<number>(899); // 14m 59s
   const [createdRefNo, setCreatedRefNo] = useState<string>('');
@@ -106,16 +106,12 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
     setIsProcessingGateway(true);
 
     setTimeout(() => {
-      // Create pending deposit request in transactions (Waiting for Admin approval)
-      requestDeposit(amountToDeposit, currentQrisName);
+      // Direct Instant Auto-Approval & Auto-Crediting to user's wallet
+      depositSuccessInstant(amountToDeposit, currentQrisName);
       setIsProcessingGateway(false);
-      setGatewayStep('PENDING_APPROVAL');
+      setGatewayStep('PAYMENT_SUCCESS');
       triggerConfetti();
-      addNotification(
-        `Pengajuan Deposit Rp ${amountToDeposit.toLocaleString('id-ID')} berhasil dibuat! Menunggu verifikasi admin.`,
-        'info'
-      );
-    }, 1200);
+    }, 1000);
   };
 
   const handleResetModal = () => {
@@ -420,27 +416,22 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
               </div>
             </div>
 
-            {/* Official QRIS Poster Card */}
+            {/* Official QRIS Barcode Card */}
             <OfficialQrisCard
               amount={amountToDeposit}
-              qrImageUrl={currentQrisImage}
-              merchantName="CAPITAL CELL, BNDNG KD"
-              nmid="ID1026565672916"
-              terminalId="A01"
-              printId="93600914"
             />
 
             {/* Quick Step Guide */}
             <div className="p-3.5 bg-slate-950 rounded-2xl border border-emerald-500/20 space-y-2 text-xs">
               <span className="font-extrabold text-emerald-400 flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4" />
-                <span>Petunjuk Pembayaran QRIS Otomatis:</span>
+                <span>Petunjuk Pembayaran QRIS:</span>
               </span>
               <ol className="list-decimal list-inside text-slate-300 text-[11px] space-y-1 pl-1">
                 <li>Buka aplikasi <strong>BCA Mobile, DANA, OVO, GoPay, ShopeePay, Mandiri, BRI</strong> atau perbankan Anda.</li>
-                <li>Pilih <strong>Scan QR / Bayar</strong> & arahkan kamera ke barcode di atas (atau unggah dari galeri).</li>
-                <li>Pastikan nama merchant tertera <strong>CAPITAL CELL, BNDNG KD</strong>.</li>
-                <li>Setelah berhasil mentransfer, klik tombol <strong>"Saya Sudah Bayar (Konfirmasi)"</strong> di bawah.</li>
+                <li>Pilih menu <strong>Scan QR / Bayar</strong> lalu arahkan kamera ke barcode di atas (atau simpan barcode ke galeri).</li>
+                <li>Nominal transfer akan terisi otomatis sesuai pilihan Anda.</li>
+                <li>Setelah transfer selesai, klik tombol <strong>"Saya Sudah Bayar (Konfirmasi Deposit)"</strong> di bawah. Saldo langsung masuk otomatis ke akun Anda.</li>
               </ol>
             </div>
 
@@ -476,7 +467,64 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
           </div>
         )}
 
-        {/* STEP 3: PENDING APPROVAL STATE */}
+        {/* STEP 3: INSTANT SUCCESS STATE */}
+        {gatewayStep === 'PAYMENT_SUCCESS' && (
+          <div className="py-4 text-center space-y-4 animate-fadeIn">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/30 animate-bounce">
+              <CheckCircle2 className="w-9 h-9" />
+            </div>
+
+            <div>
+              <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-black tracking-wider uppercase inline-block mb-1">
+                OTOMATIS TERVERIFIKASI & AKTIF
+              </span>
+              <h3 className="text-lg font-black text-white">Deposit Berhasil Masuk!</h3>
+              <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                Saldo sebesar <strong className="text-emerald-400 font-black">Rp {amountToDeposit.toLocaleString('id-ID')}</strong> telah otomatis dikreditkan ke akun Anda tanpa perlu konfirmasi manual admin.
+              </p>
+            </div>
+
+            <div className="p-3.5 bg-slate-950 rounded-2xl border border-emerald-500/30 text-xs font-mono text-slate-300 text-left space-y-2">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Nomor Referensi:</span>
+                <span className="font-bold text-white">{createdRefNo}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Metode Pembayaran:</span>
+                <span>{currentQrisName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Nominal Masuk:</span>
+                <span className="text-emerald-400 font-bold">Rp {amountToDeposit.toLocaleString('id-ID')}</span>
+              </div>
+              <div className="flex justify-between border-t border-slate-800 pt-1.5">
+                <span className="text-slate-500">Total Saldo Penarikan:</span>
+                <span className="text-white font-black">Rp {user.saldoPenarikan.toLocaleString('id-ID')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Status Sistem:</span>
+                <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                  SUKSES (AUTO-APPROVED)
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-left text-xs text-emerald-200 flex items-start gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <span>Saldo Anda sudah siap langsung digunakan untuk berinvestasi atau membeli produk di NEXA CAPITAL.</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleResetModal}
+              className="w-full py-3.5 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-xs rounded-2xl shadow-xl transition-all active:scale-95 cursor-pointer"
+            >
+              SELESAI & MULAI INVESTASI
+            </button>
+          </div>
+        )}
+
+        {/* STEP 4: PENDING APPROVAL STATE (FALLBACK) */}
         {gatewayStep === 'PENDING_APPROVAL' && (
           <div className="py-6 text-center space-y-4 animate-fadeIn">
             <div className="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto shadow-lg shadow-amber-500/20">
@@ -486,7 +534,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
             <div>
               <h3 className="text-lg font-black text-white">Deposit Sedang Diproses</h3>
               <p className="text-xs text-slate-400 mt-1">
-                Pengajuan deposit sebesar <strong className="text-amber-400 font-black">Rp {amountToDeposit.toLocaleString('id-ID')}</strong> telah masuk ke sistem verifikasi admin. Saldo akan otomatis bertambah setelah disetujui.
+                Pengajuan deposit sebesar <strong className="text-amber-400 font-black">Rp {amountToDeposit.toLocaleString('id-ID')}</strong> telah masuk ke sistem verifikasi. Saldo akan otomatis bertambah setelah disetujui.
               </p>
             </div>
 

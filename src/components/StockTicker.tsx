@@ -12,8 +12,10 @@ export const StockTicker: React.FC = () => {
         prev.map((item) => {
           const delta = (Math.random() - 0.48) * (item.price * 0.003);
           const newPrice = Math.max(10, Math.round(item.price + delta));
-          const pct = (((newPrice - item.chartData[0]) / item.chartData[0]) * 100).toFixed(1);
-          const isUp = newPrice >= item.chartData[item.chartData.length - 2];
+          const firstPoint = item.chartData && item.chartData.length > 0 ? item.chartData[0] : item.price;
+          const pct = firstPoint > 0 ? (((newPrice - firstPoint) / firstPoint) * 100).toFixed(1) : '0.0';
+          const prevPoint = item.chartData && item.chartData.length >= 2 ? item.chartData[item.chartData.length - 2] : item.price;
+          const isUp = newPrice >= prevPoint;
           return {
             ...item,
             price: newPrice,

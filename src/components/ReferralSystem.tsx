@@ -18,8 +18,23 @@ import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 
 export const ReferralSystem: React.FC = () => {
-  const { user, downlines, registeredUsers, addNotification, platformSettings } = useApp();
+  const { user, downlines, registeredUsers, addNotification, platformSettings, syncWithServer } = useApp();
   const { theme } = useTheme();
+
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  React.useEffect(() => {
+    syncWithServer?.();
+  }, []);
+
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    await syncWithServer?.();
+    setTimeout(() => {
+      setIsSyncing(false);
+      addNotification('Data referral & tim berhasil diperbarui!', 'success');
+    }, 600);
+  };
 
   const lvl1 = platformSettings?.referralLvl1Pct ?? 32;
   const lvl2 = platformSettings?.referralLvl2Pct ?? 2;

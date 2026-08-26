@@ -32,6 +32,7 @@ import systemRoutes from './server/routes/system';
 import activityRoutes from './server/routes/activity';
 import searchRoutes from './server/routes/search';
 import docsRoutes from './server/routes/docs';
+import syncRoutes from './server/routes/sync';
 import { securityHeaders, rateLimiter } from './server/middleware';
 
 async function startServer() {
@@ -106,6 +107,7 @@ async function startServer() {
   app.use('/api/activity', activityRoutes);
   app.use('/api/search', searchRoutes);
   app.use('/api/docs', docsRoutes);
+  app.use('/api/sync', syncRoutes);
 
   // Global Express Anti-DDoS Error Protection Middleware
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

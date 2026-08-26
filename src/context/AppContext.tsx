@@ -73,6 +73,8 @@ interface AppContextType {
   canClaimInvestmentToday: (inv: UserInvestment) => boolean;
   getTimeUntilNextClaim: (inv: UserInvestment) => string;
   requestDeposit: (amount: number, paymentMethod: string, proofUrl?: string) => void;
+  depositSuccessInstant: (amount: number, paymentMethod: string, proofUrl?: string) => { success: boolean; message: string };
+  syncWithServer: () => Promise<void>;
   requestWithdrawal: (amount: number, bankDetails: { bankName: string; accountNumber: string; accountHolder: string }) => { success: boolean; message: string };
   submitTestimonial: (data: { withdrawalAmount: number; rating: number; comment: string; proofImageUrl?: string }) => { success: boolean; message: string };
   
@@ -288,6 +290,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     localStorage.setItem('nexainvest_registered_users', JSON.stringify(registeredUsers));
   }, [registeredUsers]);
+
+  // Real-Time Server State Synchronization (Across Multi-devices/Phones)
+  const syncWithServer = async () => {
+    try {
+      const res = await fetch('/api/sync/state');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          if (Array.isArray(data.users) && data.users.length > 0) {
+            setRegisteredUsers((prev) => {
+              const map = new Map<string, RegisteredUser>();
+              prev.forEach((u) => map.set(u.id, u));
+              data.users.forEach((u: any) => {
+                const existing = map.get(u.id);
+                map.set(u.id, {
+                  ...u,
+                  saldoPenarikan: existing ? Math.max(existing.saldoPenarikan || 0, u.saldoPenarikan || 0) : (u.saldoPenarikan || 0),
+                  saldoProfit: existing ? Math.max(existing.saldoProfit || 0, u.saldoProfit || 0) : (u.saldoProfit || 0),
+                });
+              });
+              return Array.from(map.values());
+            });
+          }
+
+          if (Array.isArray(data.downlines) && data.downlines.length > 0) {
+            setDownlines((prev) => {
+              const map = new Map<string, DownlineUser>();
+              prev.forEach((d) => map.set(d.id, d));
+              data.downlines.forEach((d: DownlineUser) => map.set(d.id, d));
+              return Array.from(map.values());
+            });
+          }
+        }
+      }
+    } catch (e) {
+      // Safe failover
+    }
+  };
+
+  useEffect(() => {
+    syncWithServer();
+    const interval = setInterval(syncWithServer, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const login = (emailOrPhone: string, pass: string) => {
     if (!emailOrPhone.trim() || !pass.trim()) {
@@ -507,6 +553,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUser(newUserProfile);
     setIsAdminMode(false);
     setIsLoggedIn(true);
+
+    // Sync registration to server so upline's phone immediately detects the new downline
+    fetch('/api/sync/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: data.name.trim(),
+        email: newRegUser.email,
+        phone: cleanPhone,
+        password: data.password.trim(),
+        referralCode: data.referralCode?.trim() || undefined,
+      }),
+    })
+      .then(() => syncWithServer())
+      .catch((err) => console.warn('Background sync register error:', err));
 
     triggerConfetti();
     addNotification(`Pendaftaran akun berhasil! Selamat datang di NEXA CAPITAL.`, 'success');
@@ -989,6 +1050,71 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addNotification(`Pengajuan deposit Rp ${amount.toLocaleString('id-ID')} via ${paymentMethod} dikirim. Menunggu persetujuan admin.`, 'info');
   };
 
+  // Instant Auto-Deposit (Auto-Approved & Balance credited directly without manual admin approval)
+  const depositSuccessInstant = (amount: number, paymentMethod: string, proofUrl?: string) => {
+    const minDep = platformSettings.minDeposit || 30000;
+    const maxDep = platformSettings.maxDeposit || 50000000;
+    if (amount < minDep) {
+      addNotification(`Minimal deposit adalah Rp ${minDep.toLocaleString('id-ID')}`, 'error');
+      return { success: false, message: `Minimal deposit Rp ${minDep.toLocaleString('id-ID')}` };
+    }
+    if (amount > maxDep) {
+      addNotification(`Maksimal deposit adalah Rp ${maxDep.toLocaleString('id-ID')} per transaksi`, 'error');
+      return { success: false, message: `Maksimal deposit Rp ${maxDep.toLocaleString('id-ID')}` };
+    }
+
+    const ref = `NEXA-AUTO-${Date.now().toString().slice(-6)}`;
+    const newTx: Transaction = {
+      id: generateUniqueTxId('tx-dep'),
+      userId: user.id,
+      type: 'DEPOSIT',
+      amount,
+      status: 'APPROVED',
+      note: `Deposit Otomatis Terverifikasi via ${paymentMethod} (${ref})`,
+      date: new Date().toISOString(),
+      paymentMethod,
+      proofUrl: proofUrl || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&auto=format&fit=crop&q=80',
+    };
+
+    // Credit active user balance immediately
+    setUser((prev) => {
+      const newSaldo = (prev.saldoPenarikan || 0) + amount;
+      return {
+        ...prev,
+        saldoPenarikan: newSaldo,
+        balance: newSaldo,
+      };
+    });
+
+    // Update in registered users list
+    setRegisteredUsers((prev) =>
+      prev.map((u) => {
+        if (u.id === user.id || u.phone === user.phone) {
+          return {
+            ...u,
+            saldoPenarikan: (u.saldoPenarikan || 0) + amount,
+          };
+        }
+        return u;
+      })
+    );
+
+    setTransactions((prev) => [newTx, ...prev]);
+
+    // Send async background sync to server database
+    fetch('/api/sync/auto-deposit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id, amount, paymentMethod }),
+    })
+      .then(() => syncWithServer())
+      .catch((err) => console.warn('Background auto-deposit sync error:', err));
+
+    triggerConfetti();
+    addNotification(`Deposit Rp ${amount.toLocaleString('id-ID')} via ${paymentMethod} berhasil terdeteksi dan saldo otomatis masuk!`, 'success');
+    return { success: true, message: `Deposit Rp ${amount.toLocaleString('id-ID')} berhasil!` };
+  };
+
   // Request Withdrawal (Min 50k, Max 10jt, 1x / hari limit)
   const requestWithdrawal = (
     amount: number,
@@ -1283,11 +1409,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         resetPlatformSettings,
         user,
         setUser,
+        registeredUsers,
+        setRegisteredUsers,
         products,
         setProducts,
         userInvestments,
         transactions,
+        setTransactions,
         downlines,
+        setDownlines,
         testimonials,
         isAdminMode,
         setIsAdminMode,
@@ -1304,6 +1434,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         canClaimInvestmentToday,
         getTimeUntilNextClaim,
         requestDeposit,
+        depositSuccessInstant,
+        syncWithServer,
         requestWithdrawal,
         submitTestimonial,
         approveDeposit,
@@ -1319,6 +1451,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         deleteProduct,
         toggleProductStatus,
         topUpUserBalanceAdmin,
+        toggleUserLockAdmin,
+        addUserAdmin,
+        deleteUserAdmin,
+        adjustUserBalanceAdmin,
         triggerConfetti,
       }}
     >
