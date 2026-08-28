@@ -161,8 +161,24 @@ export const ReferralSystem: React.FC = () => {
     }
   });
 
+  const [selectedLevelFilter, setSelectedLevelFilter] = useState<'ALL' | '1' | '2' | '3'>('ALL');
+  const [showQrModal, setShowQrModal] = useState<boolean>(false);
+
   const userDownlines = Array.from(downlineMap.values());
-  const totalCommission = userDownlines.reduce((acc, curr) => acc + (curr.commissionEarned || 0), 0);
+  const filteredDownlines = userDownlines.filter((d) => {
+    if (selectedLevelFilter === 'ALL') return true;
+    return String(d.level || 1) === selectedLevelFilter;
+  });
+
+  const countL1 = userDownlines.filter((d) => (d.level || 1) === 1).length;
+  const countL2 = userDownlines.filter((d) => d.level === 2).length;
+  const countL3 = userDownlines.filter((d) => d.level === 3).length;
+
+  const commissionL1 = userDownlines.filter((d) => (d.level || 1) === 1).reduce((acc, curr) => acc + (curr.commissionEarned || 0), 0);
+  const commissionL2 = userDownlines.filter((d) => d.level === 2).reduce((acc, curr) => acc + (curr.commissionEarned || 0), 0);
+  const commissionL3 = userDownlines.filter((d) => d.level === 3).reduce((acc, curr) => acc + (curr.commissionEarned || 0), 0);
+
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(referralLink)}&margin=10`;
 
   return (
     <div className="space-y-6 pb-12">
@@ -174,9 +190,20 @@ export const ReferralSystem: React.FC = () => {
         }}
       >
         <div className="relative z-10 max-w-3xl space-y-3">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black backdrop-blur-md">
-            <Gift className="w-3.5 h-3.5" />
-            <span>Sistem Komisi 3-Level Resmi</span>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black backdrop-blur-md">
+              <Gift className="w-3.5 h-3.5" />
+              <span>Sistem Komisi 3-Level Resmi</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleManualSync}
+              disabled={isSyncing}
+              className="px-3 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-700 active:scale-95 cursor-pointer"
+            >
+              <span className={isSyncing ? 'animate-spin' : ''}>🔄</span>
+              <span>{isSyncing ? 'Menyinkronkan...' : 'Sinkronkan Tim'}</span>
+            </button>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -184,7 +211,7 @@ export const ReferralSystem: React.FC = () => {
           </h1>
 
           <p className="text-slate-200 text-xs sm:text-sm leading-relaxed">
-            Dapatkan komisi investasi berjenjang dari setiap anggota tim Anda! Komisi diproses secara transparan dan otomatis dikreditkan ke Saldo Penarikan.
+            Dapatkan komisi investasi berjenjang dari setiap anggota tim Anda! Komisi diproses secara transparan dan otomatis dikreditkan langsung ke Saldo Penarikan tanpa perlu persetujuan manual.
           </p>
         </div>
       </div>
@@ -205,8 +232,9 @@ export const ReferralSystem: React.FC = () => {
           <p className="text-xs text-slate-800 dark:text-slate-100 font-semibold mt-2 leading-relaxed">
             Anggota yang mendaftar langsung menggunakan link/kode referral Anda.
           </p>
-          <div className="mt-3 p-3 bg-amber-400/15 border border-amber-400/40 rounded-xl text-xs font-extrabold text-amber-900 dark:text-amber-300">
-            Simulasi: Beli Produk 50k &rarr; Komisi <strong className="text-amber-700 dark:text-amber-200 text-sm">Rp {Math.round(50000 * (lvl1 / 100)).toLocaleString('id-ID')}</strong>
+          <div className="mt-3 p-3 bg-amber-400/15 border border-amber-400/40 rounded-xl text-xs font-extrabold text-amber-900 dark:text-amber-300 flex justify-between items-center">
+            <span>Total Anggota: <strong>{countL1} Orang</strong></span>
+            <span className="text-amber-600 dark:text-amber-300 font-bold">+Rp {commissionL1.toLocaleString('id-ID')}</span>
           </div>
         </div>
 
@@ -224,8 +252,9 @@ export const ReferralSystem: React.FC = () => {
           <p className="text-xs text-slate-800 dark:text-slate-100 font-semibold mt-2 leading-relaxed">
             Anggota yang diundang oleh bawahan Level 1 Anda.
           </p>
-          <div className="mt-3 p-3 bg-blue-400/15 border border-blue-400/40 rounded-xl text-xs font-extrabold text-blue-900 dark:text-blue-300">
-            Simulasi: Beli Produk 50k &rarr; Komisi <strong className="text-blue-700 dark:text-blue-200 text-sm">Rp {Math.round(50000 * (lvl2 / 100)).toLocaleString('id-ID')}</strong>
+          <div className="mt-3 p-3 bg-blue-400/15 border border-blue-400/40 rounded-xl text-xs font-extrabold text-blue-900 dark:text-blue-300 flex justify-between items-center">
+            <span>Total Anggota: <strong>{countL2} Orang</strong></span>
+            <span className="text-blue-600 dark:text-blue-300 font-bold">+Rp {commissionL2.toLocaleString('id-ID')}</span>
           </div>
         </div>
 
@@ -243,8 +272,9 @@ export const ReferralSystem: React.FC = () => {
           <p className="text-xs text-slate-800 dark:text-slate-100 font-semibold mt-2 leading-relaxed">
             Anggota yang diundang oleh bawahan Level 2 Anda.
           </p>
-          <div className="mt-3 p-3 bg-purple-400/15 border border-purple-400/40 rounded-xl text-xs font-extrabold text-purple-900 dark:text-purple-300">
-            Simulasi: Beli Produk 50k &rarr; Komisi <strong className="text-purple-700 dark:text-purple-200 text-sm">Rp {Math.round(50000 * (lvl3 / 100)).toLocaleString('id-ID')}</strong>
+          <div className="mt-3 p-3 bg-purple-400/15 border border-purple-400/40 rounded-xl text-xs font-extrabold text-purple-900 dark:text-purple-300 flex justify-between items-center">
+            <span>Total Anggota: <strong>{countL3} Orang</strong></span>
+            <span className="text-purple-600 dark:text-purple-300 font-bold">+Rp {commissionL3.toLocaleString('id-ID')}</span>
           </div>
         </div>
       </div>
@@ -264,30 +294,37 @@ export const ReferralSystem: React.FC = () => {
             </span>
             <button
               onClick={handleCopyCode}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all flex items-center space-x-1"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition-all flex items-center space-x-1 cursor-pointer"
             >
               {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedCode ? 'Tersalin' : 'Salin Kode'}</span>
             </button>
           </div>
 
-          {/* Social Share Buttons */}
+          {/* Social Share & QR Code Buttons */}
           <div className="pt-2">
-            <span className="text-[11px] text-slate-700 dark:text-slate-200 font-bold block mb-2">Bagikan Langsung Ke:</span>
+            <span className="text-[11px] text-slate-700 dark:text-slate-200 font-bold block mb-2">Bagikan & Scan QR:</span>
             <div className="flex items-center space-x-2">
               <button
                 onClick={shareWhatsApp}
-                className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-colors"
+                className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>WhatsApp</span>
               </button>
               <button
                 onClick={shareTelegram}
-                className="flex-1 py-2 px-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-colors"
+                className="flex-1 py-2 px-3 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs flex items-center justify-center space-x-1.5 transition-colors cursor-pointer"
               >
                 <Send className="w-4 h-4" />
                 <span>Telegram</span>
+              </button>
+              <button
+                onClick={() => setShowQrModal(true)}
+                className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs flex items-center justify-center space-x-1.5 border border-slate-700 transition-colors cursor-pointer"
+              >
+                <QrCode className="w-4 h-4" />
+                <span>QR Code</span>
               </button>
             </div>
           </div>
@@ -297,7 +334,7 @@ export const ReferralSystem: React.FC = () => {
         <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
           <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center space-x-2">
             <Share2 className="w-4 h-4 text-emerald-600" />
-            <span>Link Pendaftaran Referral</span>
+            <span>Link Pendaftaran Referral Otomatis</span>
           </h2>
 
           <div className="flex items-center space-x-2 bg-slate-50 dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
@@ -309,7 +346,7 @@ export const ReferralSystem: React.FC = () => {
             />
             <button
               onClick={handleCopyLink}
-              className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center space-x-1"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-all flex items-center space-x-1 cursor-pointer"
             >
               {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
               <span>{copiedLink ? 'Tersalin' : 'Salin Link'}</span>
@@ -319,22 +356,68 @@ export const ReferralSystem: React.FC = () => {
           <div className="p-3 bg-slate-900 text-white border border-slate-700 rounded-xl text-xs space-y-1">
             <div className="flex items-center space-x-1 text-emerald-400 font-bold">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>Komisi Langsung Otomatis:</span>
+              <span>Komisi Langsung Masuk Saldo Penarikan:</span>
             </div>
             <p className="text-[11px] text-slate-300">
-              Bonus komisi referral 3-level Anda <strong>langsung masuk ke Saldo Penarikan secara otomatis</strong> setelah downline terundang melakukan aktivitas paket investasi.
+              Bonus komisi referral 3-level Anda <strong>langsung cair ke Saldo Penarikan secara otomatis</strong> setelah member terundang membeli paket investasi.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Referral Statistics */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
-        <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4">
-          Statistik & Daftar Teman Terundang ({userDownlines.length})
-        </h2>
+      {/* Referral Statistics & Filter Tabs */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-700 pb-3">
+          <h2 className="text-base font-bold text-slate-900 dark:text-white">
+            Daftar Anggota Tim & Downline ({userDownlines.length})
+          </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          {/* Level Filter Buttons */}
+          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
+            <button
+              onClick={() => setSelectedLevelFilter('ALL')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                selectedLevelFilter === 'ALL'
+                  ? 'bg-amber-500 text-slate-950 font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Semua ({userDownlines.length})
+            </button>
+            <button
+              onClick={() => setSelectedLevelFilter('1')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                selectedLevelFilter === '1'
+                  ? 'bg-amber-400 text-slate-950 font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Lvl 1 ({countL1})
+            </button>
+            <button
+              onClick={() => setSelectedLevelFilter('2')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                selectedLevelFilter === '2'
+                  ? 'bg-blue-500 text-white font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Lvl 2 ({countL2})
+            </button>
+            <button
+              onClick={() => setSelectedLevelFilter('3')}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                selectedLevelFilter === '3'
+                  ? 'bg-purple-500 text-white font-black'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Lvl 3 ({countL3})
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
             <span className="text-xs text-slate-700 dark:text-slate-200 font-bold uppercase block">Total Member Terundang</span>
             <span className="text-2xl font-extrabold text-slate-900 dark:text-white mt-1 block">
@@ -343,7 +426,7 @@ export const ReferralSystem: React.FC = () => {
           </div>
 
           <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
-            <span className="text-xs text-slate-700 dark:text-slate-200 font-bold uppercase block font-mono">Total Komisi Disetujui</span>
+            <span className="text-xs text-slate-700 dark:text-slate-200 font-bold uppercase block font-mono">Total Komisi Referral Cair</span>
             <span className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 block">
               +Rp {user.totalReferralCommission.toLocaleString('id-ID')}
             </span>
@@ -351,12 +434,16 @@ export const ReferralSystem: React.FC = () => {
         </div>
 
         {/* Downline Table or Empty State */}
-        {userDownlines.length === 0 ? (
+        {filteredDownlines.length === 0 ? (
           <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 space-y-2">
             <Users className="w-8 h-8 text-slate-400 mx-auto" />
-            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Belum ada member terundang</p>
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+              {selectedLevelFilter === 'ALL'
+                ? 'Belum ada member terundang'
+                : `Belum ada member di Level ${selectedLevelFilter}`}
+            </p>
             <p className="text-xs text-slate-500">
-              Bagikan link referral Anda di atas ke teman atau media sosial untuk mulai menerima komisi instan 3-Level!
+              Bagikan link referral Anda di atas ke teman atau media sosial untuk mulai menerima komisi 3-Level!
             </p>
           </div>
         ) : (
@@ -367,12 +454,12 @@ export const ReferralSystem: React.FC = () => {
                   <th className="px-4 py-3.5">Nama Member</th>
                   <th className="px-4 py-3.5">Level Referral</th>
                   <th className="px-4 py-3.5">Tanggal Bergabung</th>
-                  <th className="px-4 py-3.5 text-right">Total Transaksi</th>
+                  <th className="px-4 py-3.5 text-right">Total Investasi</th>
                   <th className="px-4 py-3.5 text-right">Komisi Anda</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700/60">
-                {userDownlines.map((d) => {
+                {filteredDownlines.map((d) => {
                   const lvl = d.level || 1;
                   return (
                     <tr key={d.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors">
@@ -412,6 +499,28 @@ export const ReferralSystem: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* QR Code Modal */}
+      {showQrModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl animate-fadeIn">
+            <h3 className="text-base font-extrabold text-white">QR Code Referral Anda</h3>
+            <p className="text-xs text-slate-400">Scan QR Code ini menggunakan kamera HP untuk mendaftar otomatis:</p>
+            <div className="p-4 bg-white rounded-2xl inline-block shadow-lg mx-auto">
+              <img src={qrImageUrl} alt="QR Referral" className="w-48 h-48 mx-auto" />
+            </div>
+            <div className="text-xs font-mono text-amber-400 font-bold bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+              Kode: {user.referralCode}
+            </div>
+            <button
+              onClick={() => setShowQrModal(false)}
+              className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs cursor-pointer"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -773,19 +773,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // 3-LEVEL REFERRAL COMMISSION SYSTEM (Directly Auto-credited to Upline's Saldo Penarikan)
     const lvl1Pct = platformSettings.referralLvl1Pct || 32;
+    const lvl2Pct = platformSettings.referralLvl2Pct || 2;
+    const lvl3Pct = platformSettings.referralLvl3Pct || 1;
+
     const commissionLvl1 = Math.round(product.price * (lvl1Pct / 100));
+    const commissionLvl2 = Math.round(product.price * (lvl2Pct / 100));
+    const commissionLvl3 = Math.round(product.price * (lvl3Pct / 100));
 
     if (user.referredBy) {
-      const uplineCode = user.referredBy.trim().toUpperCase();
-      const uplineUser = registeredUsers.find(
-        (u) => u.referralCode && u.referralCode.trim().toUpperCase() === uplineCode
+      const upline1Code = user.referredBy.trim().toUpperCase();
+      const upline1User = registeredUsers.find(
+        (u) => u.referralCode && u.referralCode.trim().toUpperCase() === upline1Code
       );
 
-      if (uplineUser) {
-        // Credit upline in registeredUsers
+      if (upline1User) {
+        // --- 1. Credit Level 1 Upline ---
         setRegisteredUsers((prev) =>
           prev.map((u) =>
-            u.id === uplineUser.id
+            u.id === upline1User.id
               ? {
                   ...u,
                   saldoPenarikan: (u.saldoPenarikan || 0) + commissionLvl1,
@@ -795,10 +800,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           )
         );
 
-        // Transaction log for Upline
         const refTxLvl1: Transaction = {
           id: generateUniqueTxId('tx-ref-l1'),
-          userId: uplineUser.id,
+          userId: upline1User.id,
           type: 'REFERRAL_COMMISSION',
           amount: commissionLvl1,
           status: 'APPROVED',
@@ -808,10 +812,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
         setTransactions((prev) => [refTxLvl1, ...prev]);
 
-        // Update downlines progress
+        // Update downlines tracking
         setDownlines((prev) =>
           prev.map((d) =>
-            d.uplineReferralCode === uplineCode && (d.name === user.name || d.email === user.email)
+            d.uplineReferralCode === upline1Code && (d.name === user.name || d.email === user.email)
               ? {
                   ...d,
                   totalSpent: (d.totalSpent || 0) + product.price,
@@ -820,6 +824,74 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               : d
           )
         );
+
+        // --- 2. Credit Level 2 Upline (Upline of Level 1) ---
+        if (upline1User.referredBy) {
+          const upline2Code = upline1User.referredBy.trim().toUpperCase();
+          const upline2User = registeredUsers.find(
+            (u) => u.referralCode && u.referralCode.trim().toUpperCase() === upline2Code
+          );
+
+          if (upline2User && upline2User.id !== upline1User.id) {
+            setRegisteredUsers((prev) =>
+              prev.map((u) =>
+                u.id === upline2User.id
+                  ? {
+                      ...u,
+                      saldoPenarikan: (u.saldoPenarikan || 0) + commissionLvl2,
+                      totalReferralCommission: (u.totalReferralCommission || 0) + commissionLvl2,
+                    }
+                  : u
+              )
+            );
+
+            const refTxLvl2: Transaction = {
+              id: generateUniqueTxId('tx-ref-l2'),
+              userId: upline2User.id,
+              type: 'REFERRAL_COMMISSION',
+              amount: commissionLvl2,
+              status: 'APPROVED',
+              note: `Komisi Referral Lvl 2 (${lvl2Pct}%) dari ${user.name} via ${upline1User.fullName} (Beli ${product.name})`,
+              date: new Date().toISOString(),
+              referralLevel: 2,
+            };
+            setTransactions((prev) => [refTxLvl2, ...prev]);
+
+            // --- 3. Credit Level 3 Upline (Upline of Level 2) ---
+            if (upline2User.referredBy) {
+              const upline3Code = upline2User.referredBy.trim().toUpperCase();
+              const upline3User = registeredUsers.find(
+                (u) => u.referralCode && u.referralCode.trim().toUpperCase() === upline3Code
+              );
+
+              if (upline3User && upline3User.id !== upline2User.id && upline3User.id !== upline1User.id) {
+                setRegisteredUsers((prev) =>
+                  prev.map((u) =>
+                    u.id === upline3User.id
+                      ? {
+                          ...u,
+                          saldoPenarikan: (u.saldoPenarikan || 0) + commissionLvl3,
+                          totalReferralCommission: (u.totalReferralCommission || 0) + commissionLvl3,
+                        }
+                      : u
+                  )
+                );
+
+                const refTxLvl3: Transaction = {
+                  id: generateUniqueTxId('tx-ref-l3'),
+                  userId: upline3User.id,
+                  type: 'REFERRAL_COMMISSION',
+                  amount: commissionLvl3,
+                  status: 'APPROVED',
+                  note: `Komisi Referral Lvl 3 (${lvl3Pct}%) dari ${user.name} via ${upline2User.fullName} (Beli ${product.name})`,
+                  date: new Date().toISOString(),
+                  referralLevel: 3,
+                };
+                setTransactions((prev) => [refTxLvl3, ...prev]);
+              }
+            }
+          }
+        }
       }
     }
 

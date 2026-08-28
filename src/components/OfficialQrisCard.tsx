@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Download, Copy, Check, ShieldCheck, Zap } from 'lucide-react';
-import { generateDynamicQris } from '../utils/qrisGenerator';
+import { Download, Copy, Check, ShieldCheck, Zap, RefreshCw, Smartphone } from 'lucide-react';
+import { generateDynamicQris, getStaticQris, OFFICIAL_AUTHENTIC_QRIS_STATIC } from '../utils/qrisGenerator';
 
 interface OfficialQrisCardProps {
   amount?: number;
@@ -22,16 +22,29 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
   onDownload,
   showAmount = true,
 }) => {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
+  const [copiedMerchant, setCopiedMerchant] = useState(false);
+  // Default to static authentic ASPI QRIS so DANA, BCA, Mandiri, BRImo never return 'Transaksi Gagal'
+  const [isDynamicMode, setIsDynamicMode] = useState(false);
   const qrCardRef = React.useRef<HTMLDivElement>(null);
 
-  // Exact 100% Valid ASPI Base QRIS payload for CAPITAL CELL, BNDNG KD
-  const officialBasePayload = '00020101021126660014ID.LINKAJA.WWW01189360091410265656720215ID10265656729160303UMI51590014ID.LINKAJA.WWW01189360091410265656720215ID10265656729165204581253033605802ID5922CAPITAL CELL, BNDNG KD6007BANDUNG61054011562070703A0163047906';
+  // Exact 100% Valid ASPI Base QRIS payload
+  const officialBasePayload = OFFICIAL_AUTHENTIC_QRIS_STATIC;
 
-  // Compute Dynamic QRIS string with Tag 54 (Amount) embedded so m-banking fills nominal automatically
-  const dynamicPayload = React.useMemo(() => {
-    return generateDynamicQris(officialBasePayload, amount);
-  }, [amount]);
+  // Determine if a custom merchant image (data url or image url) is provided
+  const hasCustomImage = Boolean(
+    qrImageUrl && 
+    qrImageUrl.trim().length > 10 && 
+    !qrImageUrl.includes('api.qrserver.com')
+  );
+
+  // Compute QRIS string according to active mode
+  const activePayload = React.useMemo(() => {
+    if (isDynamicMode && amount && amount > 0) {
+      return generateDynamicQris(officialBasePayload, amount);
+    }
+    return getStaticQris(officialBasePayload);
+  }, [isDynamicMode, amount, officialBasePayload]);
 
   const handleCopyAmount = () => {
     if (amount) {
@@ -41,13 +54,27 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
     }
   };
 
+  const handleCopyMerchant = () => {
+    navigator.clipboard.writeText(merchantName);
+    setCopiedMerchant(true);
+    setTimeout(() => setCopiedMerchant(false), 2000);
+  };
+
   const handleDownloadImage = () => {
     if (onDownload) {
       onDownload();
       return;
     }
+
+    if (hasCustomImage && qrImageUrl) {
+      const link = document.createElement('a');
+      link.href = qrImageUrl;
+      link.download = `QRIS_${merchantName.replace(/\s+/g, '_')}_${amount || ''}.png`;
+      link.click();
+      return;
+    }
     
-    // Download direct high-res canvas from SVG or image
+    // Download direct high-res canvas from SVG
     const svgElement = qrCardRef.current?.querySelector('svg');
     if (svgElement) {
       const svgData = new XMLSerializer().serializeToString(svgElement);
@@ -74,17 +101,72 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
 
   return (
     <div ref={qrCardRef} className="w-full max-w-sm mx-auto select-none space-y-3">
-      {/* Pure Barcode QR Container Only */}
-      <div className="bg-white rounded-3xl p-5 shadow-2xl border border-slate-200 text-slate-900 text-center flex flex-col items-center justify-center">
-        <div className="p-3.5 bg-white rounded-2xl border-2 border-slate-900/10 flex items-center justify-center shadow-inner">
-          <QRCodeSVG
-            value={dynamicPayload}
-            size={260}
-            level="M"
-            includeMargin={true}
-            className="w-64 h-64 max-w-full rounded-lg"
-          />
+      {/* Mode Switcher */}
+      {!hasCustomImage && (
+        <div className="flex items-center justify-between bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 text-xs">
+          <button
+            type="button"
+            onClick={() => setIsDynamicMode(true)}
+            className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              isDynamicMode
+                ? 'bg-emerald-500 text-slate-950 shadow-md'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 fill-current" />
+            <span>Nominal Otomatis</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsDynamicMode(false)}
+            className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              !isDynamicMode
+                ? 'bg-amber-500 text-slate-950 shadow-md'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Nominal Manual</span>
+          </button>
         </div>
+      )}
+
+      {/* Pure Barcode QR Container */}
+      <div className="bg-white rounded-3xl p-5 shadow-2xl border border-slate-200 text-slate-900 text-center flex flex-col items-center justify-center relative overflow-hidden">
+        {/* Top Header Badge */}
+        <div className="w-full flex items-center justify-between mb-3 px-1 border-b border-slate-100 pb-2">
+          <div className="text-left">
+            <span className="text-[10px] font-black text-slate-400 block tracking-wider uppercase">Merchant Resmi:</span>
+            <span className="text-xs font-black text-slate-900 block truncate max-w-[200px]">{merchantName}</span>
+          </div>
+          <span className="text-[10px] font-mono text-slate-400 font-bold">NMID: {nmid}</span>
+        </div>
+
+        <div className="p-3 bg-white rounded-2xl border-2 border-slate-900/10 flex items-center justify-center shadow-inner max-w-full">
+          {hasCustomImage && qrImageUrl ? (
+            <img
+              src={qrImageUrl}
+              alt={merchantName}
+              className="w-60 h-60 max-w-full object-contain rounded-lg"
+            />
+          ) : (
+            <QRCodeSVG
+              value={activePayload}
+              size={250}
+              level="M"
+              includeMargin={true}
+              className="w-60 h-60 max-w-full rounded-lg"
+            />
+          )}
+        </div>
+
+        <p className="text-[10px] text-slate-500 mt-2 font-medium">
+          {hasCustomImage
+            ? '✓ Scan gambar QRIS merchant resmi di atas menggunakan m-Banking / E-Wallet Anda'
+            : isDynamicMode
+            ? '✓ Scan via BCA, Mandiri, BRI, DANA, GoPay, OVO (Nominal otomatis terisi)'
+            : '✓ Scan barcode lalu masukkan nominal transfer secara manual'}
+        </p>
       </div>
 
       {/* Amount & Actions */}
@@ -121,10 +203,14 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px] text-slate-400">
-            <span className="flex items-center gap-1 text-emerald-400 font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Verifikasi Otomatis Aktif</span>
-            </span>
+            <button
+              type="button"
+              onClick={handleCopyMerchant}
+              className="hover:text-slate-200 flex items-center gap-1 cursor-pointer"
+            >
+              {copiedMerchant ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>Salin Nama Merchant</span>
+            </button>
 
             <button
               type="button"

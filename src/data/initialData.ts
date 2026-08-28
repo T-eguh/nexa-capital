@@ -36,16 +36,16 @@ export const INITIAL_PLATFORM_SETTINGS: PlatformSettings = {
   qris2Detail: 'Semua Aplikasi e-Wallet & m-Banking Nasional',
   qris2ImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=450x450&data=00020101021126660014ID.LINKAJA.WWW01189360091410265656720215ID10265656729160303UMI51590014ID.LINKAJA.WWW01189360091410265656720215ID10265656729165204581253033605802ID5922CAPITAL%20CELL,%20BNDNG%20KD6007BANDUNG61054011562070703A0163047906&margin=8',
   
-  bankTransferEnabled: false,
-  bankMaintenanceMessage: 'Jalur Transfer Rekening Bank saat ini sedang MAINTENANCE SEMENTARA. Silakan gunakan jalur QRIS 1 atau QRIS 2 yang siap melayani deposit 24 jam nonstop.',
+  bankTransferEnabled: true,
+  bankMaintenanceMessage: 'Jalur Transfer Rekening Bank siap melayani deposit BCA, Mandiri, dan BRI.',
   bankAccounts: [
     { bank: 'BCA', name: 'PT NEXA CAPITAL TRADING', number: '8820-1948-21', color: 'bg-blue-600' },
     { bank: 'Mandiri', name: 'PT NEXA CAPITAL TRADING', number: '1380-0092-111', color: 'bg-yellow-600' },
     { bank: 'BRI', name: 'PT NEXA CAPITAL TRADING', number: '0021-0100-222-301', color: 'bg-blue-800' },
   ],
   
-  ewalletDirectEnabled: false,
-  ewalletMaintenanceMessage: 'Jalur Transfer E-Wallet langsung saat ini sedang MAINTENANCE SEMENTARA. Silakan scan melalui QRIS 1 atau QRIS 2 menggunakan aplikasi DANA, GoPay, OVO, ShopeePay Anda (Aktif 24 jam).',
+  ewalletDirectEnabled: true,
+  ewalletMaintenanceMessage: 'Jalur Transfer E-Wallet langsung siap melayani via DANA, GoPay, OVO, dan ShopeePay.',
   ewalletNumber: '0812-9876-5432',
   ewalletHolder: 'NEXA OFFICIAL TREASURY',
 

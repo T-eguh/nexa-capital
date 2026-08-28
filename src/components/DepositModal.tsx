@@ -27,13 +27,18 @@ interface DepositModalProps {
 }
 
 export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) => {
-  const { platformSettings, requestDeposit, depositSuccessInstant, user, triggerConfetti, addNotification } = useApp();
+  const { platformSettings, requestDeposit, depositSuccessInstant, user, isAdminMode, triggerConfetti, addNotification } = useApp();
   const { theme } = useTheme();
 
   const [selectedAmount, setSelectedAmount] = useState<number>(100000);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [paymentType, setPaymentType] = useState<'AUTO_GATEWAY' | 'BANK' | 'EWALLET'>('AUTO_GATEWAY');
   const [autoGatewayMethod, setAutoGatewayMethod] = useState<'QRIS_1' | 'QRIS_2'>('QRIS_1');
+
+  // Sender details & proof for real verification
+  const [senderName, setSenderName] = useState<string>('');
+  const [senderBank, setSenderBank] = useState<string>('DANA');
+  const [proofImage, setProofImage] = useState<string>('');
 
   // Auto gateway step state
   const [gatewayStep, setGatewayStep] = useState<'SELECT' | 'PAYMENT_PENDING' | 'PAYMENT_SUCCESS' | 'PENDING_APPROVAL'>('SELECT');
@@ -96,34 +101,21 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
       return;
     }
 
-    const ref = `NEXA-AUTO-${Date.now().toString().slice(-6)}`;
+    const ref = `NEXA-DEP-${Date.now().toString().slice(-6)}`;
     setCreatedRefNo(ref);
     setGatewayStep('PAYMENT_PENDING');
     setCountdownSeconds(899);
   };
 
-  const handleSimulatePaymentCallback = () => {
-    setIsProcessingGateway(true);
-
-    setTimeout(() => {
-      // Direct Instant Auto-Approval & Auto-Crediting to user's wallet
-      depositSuccessInstant(amountToDeposit, currentQrisName);
-      setIsProcessingGateway(false);
-      setGatewayStep('PAYMENT_SUCCESS');
-      triggerConfetti();
-    }, 1000);
-  };
-
-  const handleResetModal = () => {
-    setGatewayStep('SELECT');
-    setIsProcessingGateway(false);
-    onClose();
-  };
-
-  const formatCountdown = (secs: number) => {
-    const m = Math.floor(secs / 60);
-    const s = secs % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  const handleProofUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProofImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const currentQrisRaw = '00020101021126660014ID.LINKAJA.WWW01189360091410265656720215ID10265656729160303UMI51590014ID.LINKAJA.WWW01189360091410265656720215ID10265656729165204581253033605802ID5922CAPITAL CELL, BNDNG KD6007BANDUNG61054011562070703A0163047906';
@@ -138,6 +130,41 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
   const currentQrisName = autoGatewayMethod === 'QRIS_1'
     ? platformSettings.qris1Name
     : platformSettings.qris2Name;
+
+  const currentPaymentMethodName = paymentType === 'BANK'
+    ? 'Transfer Bank'
+    : paymentType === 'EWALLET'
+    ? 'Transfer E-Wallet (DANA)'
+    : currentQrisName;
+
+  // Submit real deposit request with proof -> Goes to PENDING approval so balance is NOT credited until admin verifies transfer
+  const handleSubmitDepositWithProof = () => {
+    if (!proofImage) {
+      alert('Wajib upload foto/screenshot bukti transfer yang berhasil dari m-Banking atau E-Wallet Anda sebelum konfirmasi!');
+      return;
+    }
+
+    setIsProcessingGateway(true);
+
+    setTimeout(() => {
+      const details = `${proofImage}#SENDER:${senderName.trim() || user.name} (${senderBank})`;
+      requestDeposit(amountToDeposit, currentPaymentMethodName, details);
+      setIsProcessingGateway(false);
+      setGatewayStep('PENDING_APPROVAL');
+    }, 700);
+  };
+
+  const handleResetModal = () => {
+    setGatewayStep('SELECT');
+    setIsProcessingGateway(false);
+    onClose();
+  };
+
+  const formatCountdown = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
@@ -329,45 +356,131 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
               </div>
             )}
 
-            {/* MAINTENANCE NOTICE OR BANK ACCOUNTS */}
+            {/* ACTIVE OR MAINTENANCE BANK ACCOUNTS */}
             {paymentType === 'BANK' && (
-              <div className="p-4 bg-slate-950 rounded-2xl border border-rose-500/30 text-xs text-center space-y-3">
-                <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
-                  <AlertCircle className="w-6 h-6" />
-                </div>
-                <h4 className="font-bold text-white text-sm">Metode Bank Lain Sedang Maintenance</h4>
-                <p className="text-slate-400 text-[11px] leading-relaxed">
-                  {platformSettings.bankMaintenanceMessage ||
-                    'Jalur Transfer Rekening Bank saat ini sedang MAINTENANCE SEMENTARA. Silakan gunakan jalur QRIS 1 atau QRIS 2 yang siap melayani deposit 24 jam nonstop.'}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setPaymentType('AUTO_GATEWAY')}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-md"
-                >
-                  Gunakan Jalur QRIS 1 & QRIS 2 (24 Jam)
-                </button>
+              <div className="space-y-3">
+                {platformSettings.bankTransferEnabled ? (
+                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3 text-xs">
+                    <span className="font-extrabold text-white flex items-center gap-1.5 border-b border-slate-800 pb-2">
+                      <Building2 className="w-4 h-4 text-sky-400" />
+                      <span>Pilih Rekening Bank Tujuan Transfer:</span>
+                    </span>
+
+                    <div className="space-y-2">
+                      {(platformSettings.bankAccounts || [
+                        { bank: 'BCA', name: 'PT NEXA CAPITAL TRADING', number: '8820-1948-21', color: 'bg-blue-600' },
+                        { bank: 'Mandiri', name: 'PT NEXA CAPITAL TRADING', number: '1380-0092-111', color: 'bg-yellow-600' },
+                        { bank: 'BRI', name: 'PT NEXA CAPITAL TRADING', number: '0021-0100-222-301', color: 'bg-blue-800' },
+                      ]).map((acc, idx) => (
+                        <div key={idx} className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-black text-white ${acc.color || 'bg-slate-700'}`}>
+                                {acc.bank}
+                              </span>
+                              <span className="font-mono font-bold text-white text-xs">{acc.number}</span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 block mt-0.5">a.n {acc.name}</span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(acc.number.replace(/-/g, ''));
+                              addNotification(`Nomor rekening ${acc.bank} berhasil disalin!`, 'success');
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold flex items-center gap-1 border border-slate-700 active:scale-95 cursor-pointer"
+                          >
+                            <Copy className="w-3 h-3 text-sky-400" />
+                            <span>Salin</span>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-sky-500/10 border border-sky-500/20 text-[11px] text-sky-300">
+                      💡 Silakan transfer sejumlah <strong>Rp {amountToDeposit.toLocaleString('id-ID')}</strong> ke salah satu rekening di atas, lalu klik tombol lanjutkan untuk upload bukti transfer.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-slate-950 rounded-2xl border border-rose-500/30 text-xs text-center space-y-3">
+                    <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
+                      <AlertCircle className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-white text-sm">Metode Bank Sedang Maintenance</h4>
+                    <p className="text-slate-400 text-[11px] leading-relaxed">
+                      {platformSettings.bankMaintenanceMessage ||
+                        'Jalur Transfer Rekening Bank saat ini sedang MAINTENANCE SEMENTARA. Silakan gunakan jalur QRIS 1 atau QRIS 2 yang siap melayani deposit 24 jam nonstop.'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentType('AUTO_GATEWAY')}
+                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-md"
+                    >
+                      Gunakan Jalur QRIS 1 & QRIS 2 (24 Jam)
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* MAINTENANCE NOTICE OR EWALLET DIRECT */}
+            {/* ACTIVE OR MAINTENANCE EWALLET DIRECT */}
             {paymentType === 'EWALLET' && (
-              <div className="p-4 bg-slate-950 rounded-2xl border border-rose-500/30 text-xs text-center space-y-3">
-                <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
-                  <AlertCircle className="w-6 h-6" />
-                </div>
-                <h4 className="font-bold text-white text-sm">Metode E-Wallet Direct Sedang Maintenance</h4>
-                <p className="text-slate-400 text-[11px] leading-relaxed">
-                  {platformSettings.ewalletMaintenanceMessage ||
-                    'Jalur Transfer E-Wallet langsung saat ini sedang MAINTENANCE SEMENTARA. Silakan scan melalui QRIS 1 atau QRIS 2 menggunakan aplikasi DANA, GoPay, OVO, ShopeePay Anda (Aktif 24 jam).'}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setPaymentType('AUTO_GATEWAY')}
-                  className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-md"
-                >
-                  Gunakan Jalur QRIS 1 & QRIS 2 (24 Jam)
-                </button>
+              <div className="space-y-3">
+                {platformSettings.ewalletDirectEnabled ? (
+                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3 text-xs">
+                    <span className="font-extrabold text-white flex items-center gap-1.5 border-b border-slate-800 pb-2">
+                      <Wallet className="w-4 h-4 text-emerald-400" />
+                      <span>Transfer Langsung E-Wallet (DANA / GoPay / OVO):</span>
+                    </span>
+
+                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-black text-white bg-emerald-600">
+                            DANA / E-WALLET
+                          </span>
+                          <span className="font-mono font-bold text-white text-xs">{platformSettings.ewalletNumber || '0812-9876-5432'}</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">a.n {platformSettings.ewalletHolder || 'NEXA OFFICIAL TREASURY'}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText((platformSettings.ewalletNumber || '081298765432').replace(/[- ]/g, ''));
+                          addNotification('Nomor E-Wallet berhasil disalin!', 'success');
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold flex items-center gap-1 border border-slate-700 active:scale-95 cursor-pointer"
+                      >
+                        <Copy className="w-3 h-3 text-emerald-400" />
+                        <span>Salin No. HP</span>
+                      </button>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-300">
+                      💡 Buka aplikasi DANA / GoPay Anda, transfer <strong>Rp {amountToDeposit.toLocaleString('id-ID')}</strong> ke nomor di atas, lalu lanjutkan untuk mengirim foto struk bukti transfer.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-slate-950 rounded-2xl border border-rose-500/30 text-xs text-center space-y-3">
+                    <div className="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto">
+                      <AlertCircle className="w-6 h-6" />
+                    </div>
+                    <h4 className="font-bold text-white text-sm">Metode E-Wallet Direct Sedang Maintenance</h4>
+                    <p className="text-slate-400 text-[11px] leading-relaxed">
+                      {platformSettings.ewalletMaintenanceMessage ||
+                        'Jalur Transfer E-Wallet langsung saat ini sedang MAINTENANCE SEMENTARA. Silakan scan melalui QRIS 1 atau QRIS 2 menggunakan aplikasi DANA, GoPay, OVO, ShopeePay Anda (Aktif 24 jam).'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentType('AUTO_GATEWAY')}
+                      className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-md"
+                    >
+                      Gunakan Jalur QRIS 1 & QRIS 2 (24 Jam)
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -375,15 +488,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
             <div className="space-y-2 pt-1">
               <button
                 type="button"
-                onClick={() => {
-                  if (paymentType === 'AUTO_GATEWAY') {
-                    handleStartAutoGateway();
-                  } else {
-                    requestDeposit(amountToDeposit, paymentType === 'BANK' ? 'Transfer Bank' : 'E-Wallet Transfer');
-                    addNotification(`Permintaan deposit Rp ${amountToDeposit.toLocaleString('id-ID')} berhasil dibuat! Menunggu verifikasi admin.`, 'info');
-                    handleResetModal();
-                  }
-                }}
+                onClick={handleStartAutoGateway}
                 className="w-full py-3.5 rounded-2xl font-black text-xs text-slate-950 shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 hover:from-emerald-300 hover:to-teal-300 cursor-pointer"
               >
                 <Zap className="w-4 h-4 fill-current text-slate-950" />
@@ -401,13 +506,13 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
           </>
         )}
 
-        {/* STEP 2: SIMULATED INSTANT PAYMENT GATEWAY INTERACTION */}
+        {/* STEP 2: PAYMENT GATEWAY INTERACTION & PROOF SUBMISSION */}
         {gatewayStep === 'PAYMENT_PENDING' && (
           <div className="space-y-4 animate-fadeIn">
             {/* Header Status & Countdown */}
             <div className="flex items-center justify-between bg-slate-950 p-3 rounded-2xl border border-slate-800">
               <div>
-                <span className="text-[10px] text-slate-400 block font-mono">Kode Referensi:</span>
+                <span className="text-[10px] text-slate-400 block font-mono">Kode Transaksi:</span>
                 <span className="text-xs font-mono font-bold text-white">{createdRefNo}</span>
               </div>
               <div className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-400 text-[11px] font-extrabold flex items-center gap-1.5 border border-amber-500/30">
@@ -416,42 +521,147 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
               </div>
             </div>
 
-            {/* Official QRIS Barcode Card */}
-            <OfficialQrisCard
-              amount={amountToDeposit}
-            />
+            {/* Method Specific Display */}
+            {paymentType === 'AUTO_GATEWAY' ? (
+              <OfficialQrisCard
+                amount={amountToDeposit}
+                qrImageUrl={currentQrisImage}
+                merchantName={currentQrisName}
+                nmid={platformSettings.qris1Detail?.includes('NMID') ? platformSettings.qris1Detail : 'ID1026565672916'}
+              />
+            ) : paymentType === 'BANK' ? (
+              <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3 text-xs">
+                <span className="font-extrabold text-white flex items-center gap-1.5 border-b border-slate-800 pb-2">
+                  <Building2 className="w-4 h-4 text-sky-400" />
+                  <span>Transfer ke Rekening Bank Resmi:</span>
+                </span>
 
-            {/* Quick Step Guide */}
-            <div className="p-3.5 bg-slate-950 rounded-2xl border border-emerald-500/20 space-y-2 text-xs">
-              <span className="font-extrabold text-emerald-400 flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Petunjuk Pembayaran QRIS:</span>
+                <div className="space-y-2">
+                  {(platformSettings.bankAccounts || [
+                    { bank: 'BCA', name: 'PT NEXA CAPITAL TRADING', number: '8820-1948-21', color: 'bg-blue-600' },
+                    { bank: 'Mandiri', name: 'PT NEXA CAPITAL TRADING', number: '1380-0092-111', color: 'bg-yellow-600' },
+                    { bank: 'BRI', name: 'PT NEXA CAPITAL TRADING', number: '0021-0100-222-301', color: 'bg-blue-800' },
+                  ]).map((acc, idx) => (
+                    <div key={idx} className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-black text-white ${acc.color || 'bg-slate-700'}`}>
+                            {acc.bank}
+                          </span>
+                          <span className="font-mono font-bold text-white text-xs">{acc.number}</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">a.n {acc.name}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(acc.number.replace(/-/g, ''));
+                          addNotification(`Nomor rekening ${acc.bank} berhasil disalin!`, 'success');
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold flex items-center gap-1 border border-slate-700 active:scale-95 cursor-pointer"
+                      >
+                        <Copy className="w-3 h-3 text-sky-400" />
+                        <span>Salin</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-xl bg-sky-500/10 border border-sky-500/30">
+                  <span className="text-slate-400 font-bold">Nominal Transfer:</span>
+                  <span className="text-base font-black text-sky-400 font-mono">Rp {amountToDeposit.toLocaleString('id-ID')}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3 text-xs">
+                <span className="font-extrabold text-white flex items-center gap-1.5 border-b border-slate-800 pb-2">
+                  <Wallet className="w-4 h-4 text-emerald-400" />
+                  <span>Transfer ke Nomor DANA / E-Wallet Resmi:</span>
+                </span>
+
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black text-white bg-emerald-600">
+                        DANA
+                      </span>
+                      <span className="font-mono font-bold text-white text-xs">{platformSettings.ewalletNumber || '0812-9876-5432'}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">a.n {platformSettings.ewalletHolder || 'NEXA OFFICIAL TREASURY'}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText((platformSettings.ewalletNumber || '081298765432').replace(/[- ]/g, ''));
+                      addNotification('Nomor E-Wallet berhasil disalin!', 'success');
+                    }}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-bold flex items-center gap-1 border border-slate-700 active:scale-95 cursor-pointer"
+                  >
+                    <Copy className="w-3 h-3 text-emerald-400" />
+                    <span>Salin No. HP</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                  <span className="text-slate-400 font-bold">Nominal Transfer:</span>
+                  <span className="text-base font-black text-emerald-400 font-mono">Rp {amountToDeposit.toLocaleString('id-ID')}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Form Wajib Foto Bukti Transfer */}
+            <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 space-y-3 text-xs">
+              <span className="font-extrabold text-white flex items-center gap-1.5 border-b border-slate-800 pb-2">
+                <ShieldCheck className="w-4 h-4 text-amber-400" />
+                <span>Wajib Upload Bukti Pembayaran / Struk Transfer:</span>
               </span>
-              <ol className="list-decimal list-inside text-slate-300 text-[11px] space-y-1 pl-1">
-                <li>Buka aplikasi <strong>BCA Mobile, DANA, OVO, GoPay, ShopeePay, Mandiri, BRI</strong> atau perbankan Anda.</li>
-                <li>Pilih menu <strong>Scan QR / Bayar</strong> lalu arahkan kamera ke barcode di atas (atau simpan barcode ke galeri).</li>
-                <li>Nominal transfer akan terisi otomatis sesuai pilihan Anda.</li>
-                <li>Setelah transfer selesai, klik tombol <strong>"Saya Sudah Bayar (Konfirmasi Deposit)"</strong> di bawah. Saldo langsung masuk otomatis ke akun Anda.</li>
-              </ol>
+
+              <div>
+                <label className="text-[11px] text-slate-300 font-bold block mb-1.5">
+                  Foto Struk / Screenshot Bukti Transfer: <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProofUpload}
+                  className="w-full text-[11px] text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400 file:cursor-pointer cursor-pointer bg-slate-900 p-2 rounded-xl border border-slate-800"
+                />
+                {proofImage ? (
+                  <div className="mt-2.5 flex items-center space-x-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                    <div className="w-12 h-12 rounded-lg overflow-hidden border border-emerald-500/50 shrink-0">
+                      <img src={proofImage} alt="Bukti Transfer" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="text-[11px] text-emerald-400 font-bold">
+                      ✓ Foto bukti transfer siap dikirim untuk dicek admin
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-rose-400 mt-1">
+                    *Foto bukti transfer wajib diunggah agar admin dapat memvalidasi mutasi rekening.
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* ACTION BUTTONS */}
             <div className="space-y-2 pt-1">
               <button
                 type="button"
-                disabled={isProcessingGateway}
-                onClick={handleSimulatePaymentCallback}
-                className="w-full py-3.5 rounded-2xl font-black text-xs text-slate-950 shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-2 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 hover:from-emerald-300 hover:to-teal-300 disabled:opacity-50 cursor-pointer"
+                disabled={isProcessingGateway || !proofImage}
+                onClick={handleSubmitDepositWithProof}
+                className="w-full py-3.5 rounded-2xl font-black text-xs text-slate-950 shadow-xl transition-all active:scale-95 flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isProcessingGateway ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
-                    <span>Mengecek & Menyimpan Pengajuan Deposit...</span>
+                    <span>Mengirim Bukti & Mendaftarkan ke Antrean Admin...</span>
                   </>
                 ) : (
                   <>
-                    <Zap className="w-4 h-4 fill-current text-slate-950" />
-                    <span>SAYA SUDAH BAYAR (KONFIRMASI DEPOSIT)</span>
+                    <ShieldCheck className="w-4 h-4 text-slate-950" />
+                    <span>KIRIM BUKTI TRANSFER & AJUKAN DEPOSIT</span>
                   </>
                 )}
               </button>
@@ -467,7 +677,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
           </div>
         )}
 
-        {/* STEP 3: INSTANT SUCCESS STATE */}
+        {/* STEP 3: INSTANT SUCCESS STATE (ADMIN MODE ONLY) */}
         {gatewayStep === 'PAYMENT_SUCCESS' && (
           <div className="py-4 text-center space-y-4 animate-fadeIn">
             <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 text-emerald-400 flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/30 animate-bounce">
@@ -476,11 +686,11 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
 
             <div>
               <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] font-black tracking-wider uppercase inline-block mb-1">
-                OTOMATIS TERVERIFIKASI & AKTIF
+                TERVERIFIKASI & AKTIF
               </span>
               <h3 className="text-lg font-black text-white">Deposit Berhasil Masuk!</h3>
               <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                Saldo sebesar <strong className="text-emerald-400 font-black">Rp {amountToDeposit.toLocaleString('id-ID')}</strong> telah otomatis dikreditkan ke akun Anda tanpa perlu konfirmasi manual admin.
+                Saldo sebesar <strong className="text-emerald-400 font-black">Rp {amountToDeposit.toLocaleString('id-ID')}</strong> telah berhasil dikreditkan ke saldo akun Anda.
               </p>
             </div>
 
@@ -501,17 +711,6 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                 <span className="text-slate-500">Total Saldo Penarikan:</span>
                 <span className="text-white font-black">Rp {user.saldoPenarikan.toLocaleString('id-ID')}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Status Sistem:</span>
-                <span className="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                  SUKSES (AUTO-APPROVED)
-                </span>
-              </div>
-            </div>
-
-            <div className="p-3 bg-emerald-950/40 border border-emerald-500/30 rounded-xl text-left text-xs text-emerald-200 flex items-start gap-2">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-              <span>Saldo Anda sudah siap langsung digunakan untuk berinvestasi atau membeli produk di NEXA CAPITAL.</span>
             </div>
 
             <button
@@ -519,12 +718,12 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
               onClick={handleResetModal}
               className="w-full py-3.5 bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 font-black text-xs rounded-2xl shadow-xl transition-all active:scale-95 cursor-pointer"
             >
-              SELESAI & MULAI INVESTASI
+              SELESAI & TUTUP
             </button>
           </div>
         )}
 
-        {/* STEP 4: PENDING APPROVAL STATE (FALLBACK) */}
+        {/* STEP 4: PENDING APPROVAL STATE */}
         {gatewayStep === 'PENDING_APPROVAL' && (
           <div className="py-6 text-center space-y-4 animate-fadeIn">
             <div className="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto shadow-lg shadow-amber-500/20">
@@ -532,9 +731,12 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
             </div>
 
             <div>
-              <h3 className="text-lg font-black text-white">Deposit Sedang Diproses</h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Pengajuan deposit sebesar <strong className="text-amber-400 font-black">Rp {amountToDeposit.toLocaleString('id-ID')}</strong> telah masuk ke sistem verifikasi. Saldo akan otomatis bertambah setelah disetujui.
+              <span className="px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-black tracking-wider uppercase inline-block mb-1">
+                MENUNGGU VERIFIKASI ADMIN
+              </span>
+              <h3 className="text-lg font-black text-white">Pengajuan Deposit Terkirim!</h3>
+              <p className="text-xs text-slate-300 mt-1 max-w-sm mx-auto">
+                Pengajuan deposit sebesar <strong className="text-amber-400 font-black">Rp {amountToDeposit.toLocaleString('id-ID')}</strong> telah masuk ke antrean verifikasi admin. Saldo Anda akan otomatis bertambah setelah transfer diverifikasi.
               </p>
             </div>
 
@@ -548,23 +750,27 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                 <span>{currentQrisName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Status Permintaan:</span>
+                <span className="text-slate-500">Nominal:</span>
+                <span className="text-amber-400 font-bold">Rp {amountToDeposit.toLocaleString('id-ID')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Status:</span>
                 <span className="text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
-                  MENUNGGU VERIFIKASI ADMIN
+                  MENUNGGU PERSETUJUAN
                 </span>
               </div>
             </div>
 
             <div className="p-3 bg-blue-950/40 border border-blue-500/30 rounded-xl text-left text-xs text-blue-200">
-              💡 <strong>Tips:</strong> Anda dapat memeriksa riwayat transaksi atau menghubungi CS di Telegram jika verifikasi belum masuk lebih dari 5 menit.
+              💡 <strong>Petunjuk:</strong> Admin memproses verifikasi deposit dalam 1-5 menit. Anda dapat memantau status secara langsung di menu <strong>Riwayat Transaksi</strong> atau menghubungi CS via Telegram jika butuh bantuan cepat.
             </div>
 
             <button
               type="button"
               onClick={handleResetModal}
-              className="w-full py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-lg transition-all active:scale-95 cursor-pointer"
+              className="w-full py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs rounded-2xl shadow-lg transition-all active:scale-95 cursor-pointer"
             >
-              TUTUP & CEK RIWAYAT
+              TUTUP & CEK RIWAYAT TRANSAKSI
             </button>
           </div>
         )}

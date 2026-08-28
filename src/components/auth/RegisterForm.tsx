@@ -15,9 +15,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, onSwitchT
     if (typeof window !== 'undefined') {
       try {
         const urlParams = new URLSearchParams(window.location.search);
-        const fromUrl = urlParams.get('ref') || urlParams.get('referral') || urlParams.get('r') || urlParams.get('code') || urlParams.get('invite');
+        let fromUrl = urlParams.get('ref') || urlParams.get('referral') || urlParams.get('r') || urlParams.get('code') || urlParams.get('invite');
+        
+        // Also check hash if not in search
+        if (!fromUrl && window.location.hash.includes('?')) {
+          const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+          fromUrl = hashParams.get('ref') || hashParams.get('referral') || hashParams.get('r') || hashParams.get('code') || hashParams.get('invite');
+        }
+
         const fromStorage = localStorage.getItem('pending_referral_code') || localStorage.getItem('nexainvest_pending_referral');
         initialRef = (fromUrl || fromStorage || '').trim().toUpperCase();
+        if (initialRef) {
+          localStorage.setItem('pending_referral_code', initialRef);
+          localStorage.setItem('nexainvest_pending_referral', initialRef);
+        }
       } catch (e) {
         console.warn('Error reading initial referral code:', e);
       }

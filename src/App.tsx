@@ -54,7 +54,11 @@ const MainAppContent: React.FC = () => {
     // Capture referral query parameter from URL immediately
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const incomingRef = urlParams.get('ref') || urlParams.get('referral') || urlParams.get('r') || urlParams.get('code') || urlParams.get('invite');
+      let incomingRef = urlParams.get('ref') || urlParams.get('referral') || urlParams.get('r') || urlParams.get('code') || urlParams.get('invite');
+      if (!incomingRef && window.location.hash.includes('?')) {
+        const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+        incomingRef = hashParams.get('ref') || hashParams.get('referral') || hashParams.get('r') || hashParams.get('code') || hashParams.get('invite');
+      }
       if (incomingRef && incomingRef.trim()) {
         const cleanRef = incomingRef.trim().toUpperCase();
         localStorage.setItem('pending_referral_code', cleanRef);
