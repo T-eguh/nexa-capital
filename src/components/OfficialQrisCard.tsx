@@ -26,6 +26,8 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
   const [copiedMerchant, setCopiedMerchant] = useState(false);
   // Default to static authentic ASPI QRIS so DANA, BCA, Mandiri, BRImo never return 'Transaksi Gagal'
   const [isDynamicMode, setIsDynamicMode] = useState(false);
+  // View mode: 'BARCODE_ONLY' (pure square QR code) vs 'FULL_FLYER' (full poster)
+  const [viewMode, setViewMode] = useState<'BARCODE_ONLY' | 'FULL_FLYER'>('BARCODE_ONLY');
   const qrCardRef = React.useRef<HTMLDivElement>(null);
 
   // Exact 100% Valid ASPI Base QRIS payload
@@ -66,7 +68,7 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
       return;
     }
 
-    if (hasCustomImage && qrImageUrl) {
+    if (hasCustomImage && viewMode === 'FULL_FLYER' && qrImageUrl) {
       const link = document.createElement('a');
       link.href = qrImageUrl;
       link.download = `QRIS_${merchantName.replace(/\s+/g, '_')}_${amount || ''}.png`;
@@ -101,32 +103,61 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
 
   return (
     <div ref={qrCardRef} className="w-full max-w-sm mx-auto select-none space-y-3">
-      {/* Mode Switcher */}
-      {!hasCustomImage && (
-        <div className="flex items-center justify-between bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 text-xs">
+      {/* View Mode Toggle (Hanya Barcode vs Flyer Lengkap) */}
+      <div className="flex items-center justify-between bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 text-xs">
+        <button
+          type="button"
+          onClick={() => setViewMode('BARCODE_ONLY')}
+          className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            viewMode === 'BARCODE_ONLY'
+              ? 'bg-amber-500 text-slate-950 shadow-md font-black'
+              : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Smartphone className="w-3.5 h-3.5" />
+          <span>Hanya Barcode (Fokus QR)</span>
+        </button>
+        {hasCustomImage && (
           <button
             type="button"
-            onClick={() => setIsDynamicMode(true)}
+            onClick={() => setViewMode('FULL_FLYER')}
             className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-              isDynamicMode
-                ? 'bg-emerald-500 text-slate-950 shadow-md'
+              viewMode === 'FULL_FLYER'
+                ? 'bg-slate-700 text-white shadow-md font-black'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <Zap className="w-3.5 h-3.5 fill-current" />
+            <span>Flyer Lengkap</span>
+          </button>
+        )}
+      </div>
+
+      {/* Mode Switcher for Dynamic / Static Amount */}
+      {viewMode === 'BARCODE_ONLY' && (
+        <div className="flex items-center justify-between bg-slate-900/70 p-1.5 rounded-2xl border border-slate-800/80 text-[11px]">
+          <button
+            type="button"
+            onClick={() => setIsDynamicMode(true)}
+            className={`flex-1 py-1 px-2 rounded-lg font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+              isDynamicMode
+                ? 'bg-emerald-500 text-slate-950 shadow-sm font-black'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Zap className="w-3 h-3 fill-current" />
             <span>Nominal Otomatis</span>
           </button>
           <button
             type="button"
             onClick={() => setIsDynamicMode(false)}
-            className={`flex-1 py-1.5 px-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            className={`flex-1 py-1 px-2 rounded-lg font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
               !isDynamicMode
-                ? 'bg-amber-500 text-slate-950 shadow-md'
+                ? 'bg-slate-700 text-amber-400 shadow-sm font-black'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Nominal Manual</span>
+            <RefreshCw className="w-3 h-3" />
+            <span>Nominal Bebas/Manual</span>
           </button>
         </div>
       )}
@@ -143,29 +174,31 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
         </div>
 
         <div className="p-3 bg-white rounded-2xl border-2 border-slate-900/10 flex items-center justify-center shadow-inner max-w-full">
-          {hasCustomImage && qrImageUrl ? (
+          {viewMode === 'FULL_FLYER' && hasCustomImage && qrImageUrl ? (
             <img
               src={qrImageUrl}
               alt={merchantName}
               className="w-60 h-60 max-w-full object-contain rounded-lg"
             />
           ) : (
-            <QRCodeSVG
-              value={activePayload}
-              size={250}
-              level="M"
-              includeMargin={true}
-              className="w-60 h-60 max-w-full rounded-lg"
-            />
+            <div className="p-2 bg-white rounded-xl">
+              <QRCodeSVG
+                value={activePayload}
+                size={240}
+                level="M"
+                includeMargin={true}
+                className="w-56 h-56 max-w-full rounded-lg"
+              />
+            </div>
           )}
         </div>
 
         <p className="text-[10px] text-slate-500 mt-2 font-medium">
-          {hasCustomImage
+          {viewMode === 'FULL_FLYER'
             ? '✓ Scan gambar QRIS merchant resmi di atas menggunakan m-Banking / E-Wallet Anda'
             : isDynamicMode
-            ? '✓ Scan via BCA, Mandiri, BRI, DANA, GoPay, OVO (Nominal otomatis terisi)'
-            : '✓ Scan barcode lalu masukkan nominal transfer secara manual'}
+            ? '✓ Scan Barcode QR di atas via BCA, Mandiri, BRI, DANA, GoPay, OVO (Nominal otomatis terisi)'
+            : '✓ Scan Barcode QR di atas lalu masukkan nominal transfer secara manual'}
         </p>
       </div>
 
