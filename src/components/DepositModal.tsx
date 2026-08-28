@@ -33,7 +33,6 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
   const [selectedAmount, setSelectedAmount] = useState<number>(100000);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [paymentType, setPaymentType] = useState<'AUTO_GATEWAY' | 'BANK' | 'EWALLET'>('AUTO_GATEWAY');
-  const [autoGatewayMethod, setAutoGatewayMethod] = useState<'QRIS_1' | 'QRIS_2'>('QRIS_1');
 
   // Sender details & proof for real verification
   const [senderName, setSenderName] = useState<string>('');
@@ -123,13 +122,8 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
   const dynamicQrisCode = generateDynamicQris(currentQrisRaw, amountToDeposit);
   const dynamicQrisImageUrl = getQrisQrImageUrl(dynamicQrisCode);
 
-  const currentQrisImage = autoGatewayMethod === 'QRIS_1'
-    ? (platformSettings.qris1ImageUrl?.trim() || dynamicQrisImageUrl)
-    : (platformSettings.qris2ImageUrl?.trim() || dynamicQrisImageUrl);
-
-  const currentQrisName = autoGatewayMethod === 'QRIS_1'
-    ? platformSettings.qris1Name
-    : platformSettings.qris2Name;
+  const currentQrisImage = platformSettings.qris1ImageUrl?.trim() || dynamicQrisImageUrl;
+  const currentQrisName = platformSettings.qris1Name || 'CAPITAL CELL, BNDNG KD';
 
   const currentPaymentMethodName = paymentType === 'BANK'
     ? 'Transfer Bank'
@@ -188,11 +182,11 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
               <h3 className="text-base font-extrabold flex items-center gap-1.5">
                 <span>Deposit Saldo 24 Jam</span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-400 font-black border border-emerald-500/30">
-                  QRIS 1 & QRIS 2
+                  QRIS 24 JAM
                 </span>
               </h3>
               <p className="text-[10px] text-slate-400">
-                Layanan deposit 24 jam nonstop via QRIS 1 & QRIS 2
+                Layanan deposit otomatis 24 jam nonstop via QRIS Resmi
               </p>
             </div>
           </div>
@@ -208,12 +202,12 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
         </div>
 
         {/* Informational Banner */}
-        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-300 flex items-start space-x-2.5">
-          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-xs text-emerald-300 flex items-start space-x-2.5">
+          <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
           <div>
-            <p className="font-bold text-amber-400">Info Deposit 24 Jam:</p>
+            <p className="font-bold text-emerald-400">Deposit Otomatis 24 Jam via QRIS:</p>
             <p className="text-[11px] text-slate-300 leading-snug">
-              Deposit tersedia 24 jam <strong>CUMA SATU JALUR (QRIS 1 & QRIS 2)</strong>. Metode Bank/VA lain sedang <strong>MAINTENANCE SEMENTARA</strong>.
+              Mendukung semua aplikasi m-Banking (BCA, Mandiri, BRI, BNI, Permata) & E-Wallet (DANA, GoPay, OVO, ShopeePay, LinkAja).
             </p>
           </div>
         </div>
@@ -276,7 +270,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                   }`}
                 >
                   <QrCode className="w-5 h-5 text-emerald-400" />
-                  <span className="text-xs">QRIS 1 & QRIS 2</span>
+                  <span className="text-xs">QRIS 24 Jam</span>
                   <span className="text-[9px] text-emerald-400 font-bold bg-emerald-500/20 px-1.5 py-0.5 rounded">AKTIF 24 JAM ⚡</span>
                 </button>
 
@@ -314,44 +308,30 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
               </div>
             </div>
 
-            {/* AUTO GATEWAY QRIS 1 & QRIS 2 SELECTION */}
+            {/* ACTIVE QRIS SUMMARY BOX */}
             {paymentType === 'AUTO_GATEWAY' && (
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-extrabold text-white flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-emerald-400" />
-                    <span>Pilih Jalur QRIS 24 Jam:</span>
+                    <span>Jalur QRIS Resmi 24 Jam:</span>
                   </span>
-                  <span className="text-[10px] text-emerald-400 font-mono">STATUS: ONLINE 24/7 ⚡</span>
+                  <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">ONLINE 24/7 ⚡</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {[
-                    { id: 'QRIS_1', label: platformSettings.qris1Name || 'QRIS 1 (Utama 24 Jam)', detail: platformSettings.qris1Detail || 'BCA, DANA, OVO, ShopeePay, Mandiri' },
-                    { id: 'QRIS_2', label: platformSettings.qris2Name || 'QRIS 2 (Backup 24 Jam)', detail: platformSettings.qris2Detail || 'Semua Aplikasi e-Wallet & m-Banking' },
-                  ].map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setAutoGatewayMethod(item.id as any)}
-                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                        autoGatewayMethod === item.id
-                          ? 'border-emerald-500 bg-emerald-950/60 text-white font-bold ring-1 ring-emerald-500'
-                          : 'border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-extrabold text-emerald-400">{item.label}</span>
-                        {autoGatewayMethod === item.id && <Check className="w-4 h-4 text-emerald-400 shrink-0" />}
-                      </div>
-                      <span className="text-[10px] text-slate-400 block mt-1 leading-tight">{item.detail}</span>
-                    </button>
-                  ))}
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-black text-emerald-400 block">{currentQrisName}</span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">Semua Bank (BCA, Mandiri, BRI) & E-Wallet (DANA, GoPay, OVO, ShopeePay)</span>
+                  </div>
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <QrCode className="w-4 h-4" />
+                  </div>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-300 flex items-center space-x-2">
                   <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
-                  <span>Scan QRIS 1 atau QRIS 2 untuk deposit otomatis 24 jam langsung masuk ke saldo utama!</span>
+                  <span>Scan Barcode QRIS untuk deposit 24 jam nonstop langsung diverifikasi!</span>
                 </div>
               </div>
             )}
@@ -410,14 +390,14 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                     <h4 className="font-bold text-white text-sm">Metode Bank Sedang Maintenance</h4>
                     <p className="text-slate-400 text-[11px] leading-relaxed">
                       {platformSettings.bankMaintenanceMessage ||
-                        'Jalur Transfer Rekening Bank saat ini sedang MAINTENANCE SEMENTARA. Silakan gunakan jalur QRIS 1 atau QRIS 2 yang siap melayani deposit 24 jam nonstop.'}
+                        'Jalur Transfer Rekening Bank saat ini sedang MAINTENANCE SEMENTARA. Silakan gunakan jalur QRIS yang siap melayani deposit 24 jam nonstop.'}
                     </p>
                     <button
                       type="button"
                       onClick={() => setPaymentType('AUTO_GATEWAY')}
                       className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-md"
                     >
-                      Gunakan Jalur QRIS 1 & QRIS 2 (24 Jam)
+                      Gunakan Jalur QRIS (24 Jam)
                     </button>
                   </div>
                 )}
@@ -470,14 +450,14 @@ export const DepositModal: React.FC<DepositModalProps> = ({ isOpen, onClose }) =
                     <h4 className="font-bold text-white text-sm">Metode E-Wallet Direct Sedang Maintenance</h4>
                     <p className="text-slate-400 text-[11px] leading-relaxed">
                       {platformSettings.ewalletMaintenanceMessage ||
-                        'Jalur Transfer E-Wallet langsung saat ini sedang MAINTENANCE SEMENTARA. Silakan scan melalui QRIS 1 atau QRIS 2 menggunakan aplikasi DANA, GoPay, OVO, ShopeePay Anda (Aktif 24 jam).'}
+                        'Jalur Transfer E-Wallet langsung saat ini sedang MAINTENANCE SEMENTARA. Silakan scan melalui QRIS menggunakan aplikasi DANA, GoPay, OVO, ShopeePay Anda (Aktif 24 jam).'}
                     </p>
                     <button
                       type="button"
                       onClick={() => setPaymentType('AUTO_GATEWAY')}
                       className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-md"
                     >
-                      Gunakan Jalur QRIS 1 & QRIS 2 (24 Jam)
+                      Gunakan Jalur QRIS (24 Jam)
                     </button>
                   </div>
                 )}

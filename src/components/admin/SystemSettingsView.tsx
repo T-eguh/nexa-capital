@@ -303,7 +303,7 @@ export const SystemSettingsView: React.FC = () => {
                   Barcode Resmi Merchant: CAPITAL CELL (NMID: ID1026565672916)
                 </span>
                 <span className="text-[11px] text-slate-400">
-                  Gunakan template barcode resmi ASPI nasional standar perbankan & e-wallet untuk QRIS 1 & QRIS 2.
+                  Gunakan barcode resmi standar perbankan (BCA, Mandiri, BRI) & e-wallet (DANA, GoPay, OVO).
                 </span>
               </div>
             </div>
@@ -317,14 +317,13 @@ export const SystemSettingsView: React.FC = () => {
             </button>
           </div>
 
-          {/* QRIS 1 & QRIS 2 Configurations */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* QRIS 1 */}
+          {/* QRIS Single Configuration */}
+          <div className="max-w-2xl">
             <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-2">
                 <div className="flex items-center space-x-2">
                   <QrCode className="w-4 h-4 text-emerald-400" />
-                  <h3 className="text-sm font-bold text-white">Konfigurasi QRIS 1 (Utama)</h3>
+                  <h3 className="text-sm font-bold text-white">Konfigurasi QRIS Resmi 24 Jam</h3>
                 </div>
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <span className="text-[11px] text-slate-300 font-bold">Status Aktif:</span>
@@ -339,7 +338,7 @@ export const SystemSettingsView: React.FC = () => {
 
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">Label Nama Jalur QRIS 1</label>
+                  <label className="block text-slate-400 mb-1 font-semibold">Nama Merchant QRIS</label>
                   <input
                     type="text"
                     value={formData.qris1Name}
@@ -360,7 +359,7 @@ export const SystemSettingsView: React.FC = () => {
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-slate-400 font-semibold">Gambar Barcode QRIS 1</label>
+                    <label className="block text-slate-400 font-semibold">Gambar Barcode / Flyer QRIS</label>
                     <span className="text-[10px] text-slate-500">Galeri / Kamera / URL</span>
                   </div>
                   <div className="flex items-center gap-2 mb-1.5">
@@ -377,12 +376,12 @@ export const SystemSettingsView: React.FC = () => {
                       className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-[11px] font-bold flex items-center space-x-1.5 border border-slate-700 cursor-pointer active:scale-95 transition-all"
                     >
                       <Upload className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Upload QRIS 1 dari HP / Laptop</span>
+                      <span>Upload Gambar QRIS dari HP / Laptop</span>
                     </button>
                   </div>
                   <input
                     type="text"
-                    placeholder="Atau tempel URL gambar QRIS 1..."
+                    placeholder="Atau tempel URL gambar QRIS..."
                     value={formData.qris1ImageUrl}
                     onChange={(e) => handleChange('qris1ImageUrl', e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-[11px] font-mono focus:outline-none focus:border-amber-500"
@@ -390,90 +389,10 @@ export const SystemSettingsView: React.FC = () => {
                 </div>
 
                 <div className="pt-2 flex items-center space-x-3 bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                  <img src={formData.qris1ImageUrl} alt="QRIS 1 Preview" className="w-16 h-16 rounded-xl bg-white p-1 object-contain border border-slate-700 shrink-0" />
+                  <img src={formData.qris1ImageUrl} alt="QRIS Preview" className="w-20 h-20 rounded-xl bg-white p-1 object-contain border border-slate-700 shrink-0" />
                   <div className="text-[11px] text-slate-400">
-                    <p className="font-bold text-emerald-400">Preview Tampilan QRIS 1</p>
-                    <p>Member akan otomatis memindai QR ini pada saat deposit QRIS 1.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* QRIS 2 */}
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <div className="flex items-center space-x-2">
-                  <QrCode className="w-4 h-4 text-sky-400" />
-                  <h3 className="text-sm font-bold text-white">Konfigurasi QRIS 2 (Backup)</h3>
-                </div>
-                <label className="flex items-center space-x-2 cursor-pointer">
-                  <span className="text-[11px] text-slate-300 font-bold">Status Aktif:</span>
-                  <input
-                    type="checkbox"
-                    checked={formData.qris2Enabled}
-                    onChange={(e) => handleChange('qris2Enabled', e.target.checked)}
-                    className="w-4 h-4 accent-sky-500 rounded"
-                  />
-                </label>
-              </div>
-
-              <div className="space-y-3 text-xs">
-                <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">Label Nama Jalur QRIS 2</label>
-                  <input
-                    type="text"
-                    value={formData.qris2Name}
-                    onChange={(e) => handleChange('qris2Name', e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 mb-1 font-semibold">Sub-Keterangan / Bank Didukung</label>
-                  <input
-                    type="text"
-                    value={formData.qris2Detail}
-                    onChange={(e) => handleChange('qris2Detail', e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-slate-400 font-semibold">Gambar Barcode QRIS 2</label>
-                    <span className="text-[10px] text-slate-500">Galeri / Kamera / URL</span>
-                  </div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <input
-                      type="file"
-                      ref={qris2InputRef}
-                      onChange={(e) => handleQrisFileUpload('qris2ImageUrl', e)}
-                      accept="image/*"
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => qris2InputRef.current?.click()}
-                      className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-[11px] font-bold flex items-center space-x-1.5 border border-slate-700 cursor-pointer active:scale-95 transition-all"
-                    >
-                      <Upload className="w-3.5 h-3.5 text-sky-400" />
-                      <span>Upload QRIS 2 dari HP / Laptop</span>
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Atau tempel URL gambar QRIS 2..."
-                    value={formData.qris2ImageUrl}
-                    onChange={(e) => handleChange('qris2ImageUrl', e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-[11px] font-mono focus:outline-none focus:border-amber-500"
-                  />
-                </div>
-
-                <div className="pt-2 flex items-center space-x-3 bg-slate-950 p-3 rounded-2xl border border-slate-800">
-                  <img src={formData.qris2ImageUrl} alt="QRIS 2 Preview" className="w-16 h-16 rounded-xl bg-white p-1 object-contain border border-slate-700 shrink-0" />
-                  <div className="text-[11px] text-slate-400">
-                    <p className="font-bold text-sky-400">Preview Tampilan QRIS 2</p>
-                    <p>Member akan otomatis memindai QR ini pada saat deposit QRIS 2.</p>
+                    <p className="font-bold text-emerald-400">Preview Tampilan QRIS</p>
+                    <p>Member akan otomatis memindai QR ini pada saat deposit QRIS 24 jam.</p>
                   </div>
                 </div>
               </div>
