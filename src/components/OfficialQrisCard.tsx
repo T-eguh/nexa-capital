@@ -29,12 +29,16 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
   // Exact 100% Valid ASPI Base QRIS payload
   const officialBasePayload = OFFICIAL_AUTHENTIC_QRIS_STATIC;
 
-  // Determine if a custom merchant image (data url or image url) is provided
-  const hasCustomImage = Boolean(
-    qrImageUrl && 
-    qrImageUrl.trim().length > 10 && 
-    !qrImageUrl.includes('api.qrserver.com')
+  // Determine type of QR provided: direct image (URL or base64) vs raw QRIS string
+  const isImageSrc = Boolean(
+    qrImageUrl &&
+    (qrImageUrl.startsWith('data:image') ||
+     qrImageUrl.startsWith('http://') ||
+     qrImageUrl.startsWith('https://') ||
+     qrImageUrl.startsWith('/'))
   );
+
+  const isRawQris = Boolean(qrImageUrl && qrImageUrl.trim().startsWith('000201'));
 
   const handleCopyAmount = () => {
     if (amount) {
@@ -56,7 +60,7 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
       return;
     }
 
-    if (hasCustomImage && qrImageUrl) {
+    if (isImageSrc && qrImageUrl) {
       const link = document.createElement('a');
       link.href = qrImageUrl;
       link.download = `QRIS_${merchantName.replace(/\s+/g, '_')}_${amount || ''}.png`;
@@ -104,12 +108,22 @@ export const OfficialQrisCard: React.FC<OfficialQrisCardProps> = ({
 
         {/* QR Code Barcode Box */}
         <div className="p-2 bg-white rounded-2xl border border-slate-200 flex items-center justify-center shadow-inner max-w-full">
-          {hasCustomImage && qrImageUrl ? (
+          {isImageSrc && qrImageUrl ? (
             <div className="w-64 sm:w-72 max-w-full overflow-hidden rounded-xl bg-white flex items-center justify-center">
               <img
                 src={qrImageUrl}
                 alt={merchantName}
                 className="w-full h-auto object-contain rounded-lg max-h-[380px]"
+              />
+            </div>
+          ) : isRawQris && qrImageUrl ? (
+            <div className="p-3 bg-white rounded-xl">
+              <QRCodeSVG
+                value={qrImageUrl}
+                size={240}
+                level="M"
+                includeMargin={true}
+                className="w-56 h-56 max-w-full rounded-lg"
               />
             </div>
           ) : (

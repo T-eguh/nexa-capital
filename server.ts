@@ -64,7 +64,6 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.use(securityHeaders);
-  app.use('/api', rateLimiter(150, 15 * 60 * 1000));
 
   // CORS headers
   app.use((req, res, next) => {
@@ -76,6 +75,12 @@ async function startServer() {
     }
     next();
   });
+
+  // Fast real-time multi-device sync (unthrottled so all phones receive real-time updates)
+  app.use('/api/sync', syncRoutes);
+
+  // Rate Limiter for other API endpoints
+  app.use('/api', rateLimiter(500, 5 * 60 * 1000));
 
   // Health check route
   app.get('/api/health', (req, res) => {
@@ -107,7 +112,6 @@ async function startServer() {
   app.use('/api/activity', activityRoutes);
   app.use('/api/search', searchRoutes);
   app.use('/api/docs', docsRoutes);
-  app.use('/api/sync', syncRoutes);
 
   // Global Express Anti-DDoS Error Protection Middleware
   app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

@@ -157,6 +157,27 @@ function saveSettingsToDisk(settings: ServerPlatformSettings) {
   } catch (err) {
     console.error('[SETTINGS] Failed to save settings to disk:', err);
   }
+
+  // Also safely update src/data/initialData.ts so any GitHub push / static deployment permanently retains the updated QRIS & settings
+  try {
+    const initialDataPath = path.join(process.cwd(), 'src', 'data', 'initialData.ts');
+    if (fs.existsSync(initialDataPath)) {
+      let content = fs.readFileSync(initialDataPath, 'utf-8');
+      if (settings.qris1ImageUrl) {
+        content = content.replace(/qris1ImageUrl:\s*['"`][^\r\n'"`]+['"`]/, `qris1ImageUrl: ${JSON.stringify(settings.qris1ImageUrl)}`);
+      }
+      if (settings.qris1Name) {
+        content = content.replace(/qris1Name:\s*['"`][^\r\n'"`]+['"`]/, `qris1Name: ${JSON.stringify(settings.qris1Name)}`);
+      }
+      if (settings.qris1Detail) {
+        content = content.replace(/qris1Detail:\s*['"`][^\r\n'"`]+['"`]/, `qris1Detail: ${JSON.stringify(settings.qris1Detail)}`);
+      }
+      fs.writeFileSync(initialDataPath, content, 'utf-8');
+      console.log('[SETTINGS] Successfully synchronized updated settings to src/data/initialData.ts for GitHub repository!');
+    }
+  } catch (err) {
+    console.warn('[SETTINGS] Could not write to initialData.ts:', err);
+  }
 }
 
 let serverPlatformSettings: ServerPlatformSettings = loadSettingsFromDisk();
@@ -244,6 +265,11 @@ router.post('/settings', (req: Request, res: Response) => {
     };
 
     saveSettingsToDisk(serverPlatformSettings);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('platform_settings_updated', serverPlatformSettings);
+    }
 
     return res.status(200).json({
       success: true,

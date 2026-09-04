@@ -22,6 +22,7 @@ import {
   Volume2,
   Upload,
   Image as ImageIcon,
+  RefreshCw,
 } from 'lucide-react';
 import { BankAccountInfo } from '../../types';
 
@@ -30,6 +31,8 @@ export const SystemSettingsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'DEPOSIT' | 'WITHDRAW' | 'REFERRAL' | 'COMMUNICATION' | 'BRANDING'>('DEPOSIT');
   const [formData, setFormData] = useState(platformSettings);
   const [isSavedRecently, setIsSavedRecently] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const qris1InputRef = useRef<HTMLInputElement>(null);
   const qris2InputRef = useRef<HTMLInputElement>(null);
 
@@ -121,11 +124,24 @@ export const SystemSettingsView: React.FC = () => {
     }));
   };
 
-  const handleSave = (e?: React.FormEvent) => {
+  const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    updatePlatformSettings(formData);
-    setIsSavedRecently(true);
-    setTimeout(() => setIsSavedRecently(false), 3000);
+    setIsSaving(true);
+    try {
+      const res = await updatePlatformSettings(formData);
+      setIsSavedRecently(true);
+      if (res && res.success) {
+        setSyncStatus('✅ Sinkronisasi server & seluruh perangkat HP / Laptop berhasil aktif!');
+      } else {
+        setSyncStatus('⚠️ Pengaturan tersimpan di browser ini.');
+      }
+      setTimeout(() => {
+        setIsSavedRecently(false);
+        setSyncStatus(null);
+      }, 5000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -166,10 +182,20 @@ export const SystemSettingsView: React.FC = () => {
           <button
             type="button"
             onClick={() => handleSave()}
-            className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition-all flex items-center space-x-2 shadow-lg shadow-amber-500/20 active:scale-95 cursor-pointer"
+            disabled={isSaving}
+            className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition-all flex items-center space-x-2 shadow-lg shadow-amber-500/20 active:scale-95 cursor-pointer disabled:opacity-50"
           >
-            <Save className="w-4 h-4" />
-            <span>Simpan Semua Pengaturan</span>
+            {isSaving ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Menyimpan ke Server...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                <span>Simpan Semua Pengaturan</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -178,7 +204,7 @@ export const SystemSettingsView: React.FC = () => {
         <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center space-x-2 animate-fadeIn">
           <CheckCircle2 className="w-5 h-5 shrink-0" />
           <span className="font-bold">
-            Semua perubahan pengaturan sistem telah BERHASIL DISIMPAN dan langsung aktif di seluruh halaman member!
+            {syncStatus || 'Semua perubahan pengaturan sistem telah BERHASIL DISIMPAN dan langsung aktif di seluruh HP & laptop!'}
           </span>
         </div>
       )}
@@ -390,11 +416,35 @@ export const SystemSettingsView: React.FC = () => {
 
                 <div className="pt-2 flex items-center space-x-3 bg-slate-950 p-3 rounded-2xl border border-slate-800">
                   <img src={formData.qris1ImageUrl} alt="QRIS Preview" className="w-20 h-20 rounded-xl bg-white p-1 object-contain border border-slate-700 shrink-0" />
-                  <div className="text-[11px] text-slate-400">
-                    <p className="font-bold text-emerald-400">Preview Tampilan QRIS</p>
-                    <p>Member akan otomatis memindai QR ini pada saat deposit QRIS 24 jam.</p>
+                  <div className="text-[11px] text-slate-400 flex-1">
+                    <p className="font-bold text-emerald-400">Preview Tampilan Barcode QRIS</p>
+                    <p>Setelah Anda mengganti atau mengupload QRIS baru, klik tombol simpan di bawah agar langsung sinkron dan tampil sama persis di HP & semua perangkat.</p>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleSave()}
+                  disabled={isSaving}
+                  className="w-full mt-2 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-98 transition-all disabled:opacity-50"
+                >
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                      <span>Menyimpan & Menyiarkan QRIS ke Seluruh HP...</span>
+                    </>
+                  ) : isSavedRecently ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+                      <span>✅ QRIS Berhasil Disimpan & Sinkron ke Seluruh HP!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>💾 Simpan Barcode QRIS Ini ke Seluruh Perangkat Sekarang</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>

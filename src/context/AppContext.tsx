@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
+import { io, Socket } from 'socket.io-client';
 import {
   UserProfile,
   InvestmentProduct,
@@ -33,7 +34,7 @@ interface NotificationItem {
 interface AppContextType {
   // Platform & System Settings (Dynamic config for Admin)
   platformSettings: PlatformSettings;
-  updatePlatformSettings: (newSettings: Partial<PlatformSettings>) => void;
+  updatePlatformSettings: (newSettings: Partial<PlatformSettings>) => Promise<{ success: boolean; message: string }>;
   resetPlatformSettings: () => void;
 
   // User state
@@ -228,21 +229,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return INITIAL_PLATFORM_SETTINGS;
   });
 
-  const updatePlatformSettings = (newSettings: Partial<PlatformSettings>) => {
+  const updatePlatformSettings = async (newSettings: Partial<PlatformSettings>): Promise<{ success: boolean; message: string }> => {
+    let latestSettings: PlatformSettings = platformSettings;
     setPlatformSettings((prev) => {
       const updated = { ...prev, ...newSettings };
-      localStorage.setItem('nexainvest_platform_settings', JSON.stringify(updated));
-      
-      // Immediately push to server so all other client devices/phones receive the updated QRIS & settings
-      fetch('/api/sync/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updated),
-      }).catch((err) => console.warn('[SYNC] Failed to broadcast settings to server:', err));
-
+      latestSettings = updated;
+      try {
+        localStorage.setItem('nexainvest_platform_settings', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('LocalStorage save error:', e);
+      }
       return updated;
     });
-    addNotification('Pengaturan sistem & QRIS berhasil diperbarui dan disinkronkan ke seluruh perangkat!', 'success');
+
+    try {
+      const res = await fetch('/api/sync/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(latestSettings),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        addNotification('✅ QRIS & Pengaturan tersimpan ke server dan tersinkron ke semua perangkat!', 'success');
+        return { success: true, message: json.message || 'Berhasil disimpan' };
+      } else {
+        const text = await res.text();
+        console.warn('[SYNC] Server response error:', res.status, text);
+        addNotification(`⚠️ Pengaturan tersimpan di browser ini (Status Server: ${res.status}).`, 'info');
+        return { success: false, message: `Server error: ${res.status}` };
+      }
+    } catch (err: any) {
+      console.warn('[SYNC] Network error while syncing to server:', err);
+      addNotification('⚠️ Pengaturan tersimpan lokal di perangkat ini.', 'info');
+      return { success: false, message: err.message || 'Gagal terhubung ke server' };
+    }
   };
 
   const resetPlatformSettings = () => {
@@ -379,8 +400,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     syncWithServer();
+
+    let socket: Socket | null = null;
+    try {
+      socket = io({ transports: ['websocket', 'polling'] });
+      socket.on('platform_settings_updated', (updatedSettings: any) => {
+        if (updatedSettings && typeof updatedSettings === 'object') {
+          console.log('[SOCKET] Real-time platform settings update received:', updatedSettings);
+          setPlatformSettings((prev) => {
+            const merged = { ...prev, ...updatedSettings };
+            try {
+              localStorage.setItem('nexainvest_platform_settings', JSON.stringify(merged));
+            } catch (e) {}
+            return merged;
+          });
+        }
+      });
+      socket.on('sync_state_updated', () => {
+        syncWithServer();
+      });
+    } catch (err) {
+      console.warn('[SOCKET] Socket initialization skipped:', err);
+    }
+
     const interval = setInterval(syncWithServer, 4000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (socket) {
+        socket.disconnect();
+      }
+    };
   }, []);
 
   const login = (emailOrPhone: string, pass: string) => {
