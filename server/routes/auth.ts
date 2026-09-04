@@ -82,6 +82,8 @@ router.post('/register', async (req: Request, res: Response) => {
     // Hash Password
     const passwordHash = await bcrypt.hash(validatedData.password, 10);
 
+    const cleanReferralCode = validatedData.referralCode ? validatedData.referralCode.trim().toUpperCase() : undefined;
+
     // Create User
     const newUser = db.createUser({
       fullName: validatedData.fullName,
@@ -89,21 +91,37 @@ router.post('/register', async (req: Request, res: Response) => {
       email,
       phone: validatedData.phone,
       passwordHash,
-      referredByCode: validatedData.referralCode,
+      referredByCode: cleanReferralCode,
       isEmailVerified: true,
     });
+
+    // Generate Auth Tokens
+    const accessToken = jwt.sign(
+      {
+        userId: newUser.id,
+        email: newUser.email,
+        roles: newUser.roles,
+        version: 1,
+      },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+    const refreshToken = jwt.sign({ userId: newUser.id, type: 'REFRESH' }, JWT_SECRET, { expiresIn: '7d' });
+    db.createRefreshToken(newUser.id, refreshToken, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString());
 
     // Generate Verification Token
     const verifyToken = jwt.sign({ userId: newUser.id, type: 'VERIFY' }, JWT_SECRET, { expiresIn: '24h' });
     db.createEmailVerificationToken(newUser.id, verifyToken, new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString());
 
-    // Dispatch Emails
-    await sendEmailVerificationMail(newUser.email, newUser.fullName, verifyToken);
-    await sendWelcomeMail(newUser.email, newUser.fullName, newUser.referralCode);
+    // Dispatch Emails asynchronously
+    sendEmailVerificationMail(newUser.email, newUser.fullName, verifyToken).catch(() => {});
+    sendWelcomeMail(newUser.email, newUser.fullName, newUser.referralCode).catch(() => {});
 
     return res.status(201).json({
       success: true,
-      message: 'Pendaftaran akun berhasil! Silakan periksa inbox email Anda untuk memverifikasi akun.',
+      message: 'Pendaftaran akun berhasil!',
+      token: accessToken,
+      refreshToken,
       user: {
         id: newUser.id,
         fullName: newUser.fullName,
@@ -112,6 +130,8 @@ router.post('/register', async (req: Request, res: Response) => {
         phone: newUser.phone,
         isEmailVerified: newUser.isEmailVerified,
         referralCode: newUser.referralCode,
+        referredBy: newUser.referredByCode,
+        roles: newUser.roles,
       },
     });
   } catch (err: any) {

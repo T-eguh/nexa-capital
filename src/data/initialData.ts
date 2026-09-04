@@ -27,14 +27,14 @@ export const INITIAL_PLATFORM_SETTINGS: PlatformSettings = {
   
   // Channels Config
   qris1Enabled: true,
-  qris1Name: 'QRIS 1 (CAPITAL CELL 24 Jam)',
-  qris1Detail: 'BCA, DANA, OVO, ShopeePay, Mandiri, BRI & Semua Bank',
+  qris1Name: 'QRIS Realtime (CAPITAL CELL 24 Jam)',
+  qris1Detail: 'BCA, DANA, OVO, ShopeePay, Mandiri, BRI & Semua Bank / e-Wallet',
   qris1ImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=450x450&data=00020101021126660014ID.LINKAJA.WWW01189360091410265656720215ID10265656729160303UMI51590014ID.LINKAJA.WWW01189360091410265656720215ID10265656729165204581253033605802ID5922CAPITAL%20CELL,%20BNDNG%20KD6007BANDUNG61054011562070703A0163047906&margin=8',
   
-  qris2Enabled: true,
-  qris2Name: 'QRIS 2 (CAPITAL CELL Backup 24 Jam)',
+  qris2Enabled: false,
+  qris2Name: 'QRIS Backup 24 Jam',
   qris2Detail: 'Semua Aplikasi e-Wallet & m-Banking Nasional',
-  qris2ImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=450x450&data=00020101021126660014ID.LINKAJA.WWW01189360091410265656720215ID10265656729160303UMI51590014ID.LINKAJA.WWW01189360091410265656720215ID10265656729165204581253033605802ID5922CAPITAL%20CELL,%20BNDNG%20KD6007BANDUNG61054011562070703A0163047906&margin=8',
+  qris2ImageUrl: '',
   
   bankTransferEnabled: true,
   bankMaintenanceMessage: 'Jalur Transfer Rekening Bank siap melayani deposit BCA, Mandiri, dan BRI.',
@@ -578,6 +578,7 @@ export const INITIAL_REGISTERED_USERS: RegisteredUser[] = [
     totalReferralCommission: 32000,
     vipLevel: 'VIP 2',
     referralCode: 'BUDI8899',
+    referredBy: 'NX-VIP88',
     isLockedOut: false,
     registeredAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
   },
@@ -596,6 +597,7 @@ export const INITIAL_REGISTERED_USERS: RegisteredUser[] = [
     totalReferralCommission: 84000,
     vipLevel: 'VIP 3',
     referralCode: 'DEWI9988',
+    referredBy: 'BUDI8899',
     isLockedOut: false,
     registeredAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
   },
@@ -624,14 +626,14 @@ export const INITIAL_USER: UserProfile = {
   name: 'Investor Nexa',
   email: 'investor@nexacapital.id',
   phone: '081234567890',
-  saldoPenarikan: 0,
-  saldoProfit: 0,
-  balance: 0,
-  totalInvested: 0,
-  totalProfitEarned: 0,
-  totalReferralCommission: 0,
+  saldoPenarikan: 160000,
+  saldoProfit: 50000,
+  balance: 160000,
+  totalInvested: 500000,
+  totalProfitEarned: 240000,
+  totalReferralCommission: 160000,
   referralCode: 'NX-VIP88',
-  vipLevel: 'VIP 0',
+  vipLevel: 'VIP 1',
   bankAccount: {
     bankName: 'Bank Central Asia (BCA)',
     accountNumber: '',
@@ -643,7 +645,32 @@ export const INITIAL_USER_INVESTMENTS: UserInvestment[] = [];
 
 export const INITIAL_TRANSACTIONS: Transaction[] = [];
 
-export const INITIAL_DOWNLINES: DownlineUser[] = [];
+export const INITIAL_DOWNLINES: DownlineUser[] = [
+  {
+    id: 'down-usr-99412',
+    name: 'Budi Santoso',
+    email: 'budi.s@gmail.com',
+    phone: '081345678901',
+    joinDate: '2026-08-15',
+    totalSpent: 500000,
+    commissionEarned: 160000,
+    level: 1,
+    uplineReferralCode: 'NX-VIP88',
+    uplineId: 'usr-88392',
+  },
+  {
+    id: 'down-usr-77123',
+    name: 'Dewi Lestari',
+    email: 'dewi.lestari@yahoo.com',
+    phone: '081567890123',
+    joinDate: '2026-08-20',
+    totalSpent: 1200000,
+    commissionEarned: 24000,
+    level: 2,
+    uplineReferralCode: 'BUDI8899',
+    uplineId: 'usr-99412',
+  },
+];
 
 export const INITIAL_TESTIMONIALS: Testimonial[] = [
   {

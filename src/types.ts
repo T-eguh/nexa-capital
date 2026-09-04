@@ -83,6 +83,7 @@ export interface DownlineUser {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   joinDate: string;
   totalSpent: number;
   commissionEarned: number;

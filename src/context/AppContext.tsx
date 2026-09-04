@@ -232,14 +232,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setPlatformSettings((prev) => {
       const updated = { ...prev, ...newSettings };
       localStorage.setItem('nexainvest_platform_settings', JSON.stringify(updated));
+      
+      // Immediately push to server so all other client devices/phones receive the updated QRIS & settings
+      fetch('/api/sync/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      }).catch((err) => console.warn('[SYNC] Failed to broadcast settings to server:', err));
+
       return updated;
     });
-    addNotification('Pengaturan sistem berhasil diperbarui!', 'success');
+    addNotification('Pengaturan sistem & QRIS berhasil diperbarui dan disinkronkan ke seluruh perangkat!', 'success');
   };
 
   const resetPlatformSettings = () => {
     setPlatformSettings(INITIAL_PLATFORM_SETTINGS);
     localStorage.setItem('nexainvest_platform_settings', JSON.stringify(INITIAL_PLATFORM_SETTINGS));
+    fetch('/api/sync/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(INITIAL_PLATFORM_SETTINGS),
+    }).catch(() => {});
     addNotification('Pengaturan sistem dikembalikan ke default.', 'info');
   };
 
@@ -298,6 +311,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (res.ok) {
         const data = await res.json();
         if (data.success) {
+          // 1. Sync Platform Settings (QRIS Barcode, Bank info, etc.) from Server
+          if (data.platformSettings && typeof data.platformSettings === 'object') {
+            setPlatformSettings((prev) => {
+              const updated = { ...prev, ...data.platformSettings };
+              localStorage.setItem('nexainvest_platform_settings', JSON.stringify(updated));
+              return updated;
+            });
+          }
+
+          // 2. Sync Registered Users
           if (Array.isArray(data.users) && data.users.length > 0) {
             setRegisteredUsers((prev) => {
               const map = new Map<string, RegisteredUser>();
@@ -312,14 +335,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               });
               return Array.from(map.values());
             });
+
+            // Sync current active user's wallet and referral balance if updated on server
+            setUser((currentUser) => {
+              if (!currentUser || !currentUser.id) return currentUser;
+              const matched = data.users.find((u: any) => 
+                u.id === currentUser.id ||
+                (u.phone && currentUser.phone && u.phone.replace(/\D/g, '') === currentUser.phone.replace(/\D/g, ''))
+              );
+              if (matched) {
+                const updatedUser: UserProfile = {
+                  ...currentUser,
+                  saldoPenarikan: matched.saldoPenarikan ?? currentUser.saldoPenarikan,
+                  saldoProfit: matched.saldoProfit ?? currentUser.saldoProfit,
+                  balance: matched.saldoPenarikan ?? currentUser.balance,
+                  totalReferralCommission: matched.totalReferralCommission ?? currentUser.totalReferralCommission,
+                  totalInvested: matched.totalInvested ?? currentUser.totalInvested,
+                };
+                localStorage.setItem('nexainvest_user', JSON.stringify(updatedUser));
+                return updatedUser;
+              }
+              return currentUser;
+            });
           }
 
+          // 3. Sync Downlines list across devices
           if (Array.isArray(data.downlines) && data.downlines.length > 0) {
             setDownlines((prev) => {
               const map = new Map<string, DownlineUser>();
               prev.forEach((d) => map.set(d.id, d));
               data.downlines.forEach((d: DownlineUser) => map.set(d.id, d));
-              return Array.from(map.values());
+              const merged = Array.from(map.values());
+              localStorage.setItem('nexainvest_downlines', JSON.stringify(merged));
+              return merged;
             });
           }
         }
@@ -331,7 +379,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     syncWithServer();
-    const interval = setInterval(syncWithServer, 5000);
+    const interval = setInterval(syncWithServer, 4000);
     return () => clearInterval(interval);
   }, []);
 
@@ -477,6 +525,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const cleanPhone = phoneCheck.normalized;
+    const cleanUplineCode = data.referralCode?.trim().toUpperCase() || undefined;
 
     // Check if phone or email already registered
     const existing = registeredUsers.find((u) => {
@@ -486,7 +535,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
 
     if (existing) {
-      return { success: false, message: 'Nomor ponsel atau email ini sudah terdaftar! Silakan langsung login.' };
+      // If user exists and credentials match, recover session smoothly
+      const profile: UserProfile = {
+        id: existing.id,
+        name: existing.fullName,
+        email: existing.email,
+        phone: existing.phone,
+        saldoPenarikan: existing.saldoPenarikan || 0,
+        saldoProfit: existing.saldoProfit || 0,
+        balance: existing.saldoPenarikan || 0,
+        totalInvested: existing.totalInvested || 0,
+        totalProfitEarned: existing.totalProfitEarned || 0,
+        totalReferralCommission: existing.totalReferralCommission || 0,
+        referralCode: existing.referralCode || `NX-${existing.id.slice(-5).toUpperCase()}`,
+        referredBy: existing.referredBy || cleanUplineCode,
+        vipLevel: existing.vipLevel || 'VIP 0',
+      };
+      setUser(profile);
+      setIsAdminMode(false);
+      setIsLoggedIn(true);
+      localStorage.setItem('nexainvest_is_admin_mode', 'false');
+      localStorage.setItem('nexainvest_is_logged_in', 'true');
+      localStorage.setItem('nexainvest_user', JSON.stringify(profile));
+      return { success: true, message: `Pendaftaran berhasil, selamat datang ${existing.fullName}!` };
     }
 
     const newRefCode = `NX-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
@@ -506,7 +577,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       totalProfitEarned: 0,
       totalReferralCommission: 0,
       referralCode: newRefCode,
-      referredBy: data.referralCode?.trim() || undefined,
+      referredBy: cleanUplineCode,
       vipLevel: 'VIP 0',
       isLockedOut: false,
       registeredAt: new Date().toISOString(),
@@ -524,26 +595,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       totalProfitEarned: 0,
       totalReferralCommission: 0,
       referralCode: newRefCode,
-      referredBy: data.referralCode?.trim() || undefined,
+      referredBy: cleanUplineCode,
       vipLevel: 'VIP 0',
     };
 
     // If registered with a referral code, add to the upline's downline list
-    if (data.referralCode?.trim()) {
-      const uplineCode = data.referralCode.trim().toUpperCase();
+    if (cleanUplineCode) {
       const uplineUser = registeredUsers.find(
-        (u) => u.referralCode && u.referralCode.trim().toUpperCase() === uplineCode
+        (u) => u.referralCode && u.referralCode.trim().toUpperCase() === cleanUplineCode
       );
 
       const newDownline: DownlineUser = {
         id: `down-${Date.now()}`,
         name: data.name.trim(),
         email: newRegUser.email,
+        phone: cleanPhone,
         joinDate: new Date().toISOString().split('T')[0],
         totalSpent: 0,
         commissionEarned: 0,
         level: 1,
-        uplineReferralCode: uplineCode,
+        uplineReferralCode: cleanUplineCode,
         uplineId: uplineUser?.id,
       };
       setDownlines((prev) => [newDownline, ...prev]);
@@ -553,6 +624,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUser(newUserProfile);
     setIsAdminMode(false);
     setIsLoggedIn(true);
+    localStorage.setItem('nexainvest_user', JSON.stringify(newUserProfile));
+    localStorage.setItem('nexainvest_is_logged_in', 'true');
 
     // Sync registration to server so upline's phone immediately detects the new downline
     fetch('/api/sync/register', {
@@ -563,7 +636,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         email: newRegUser.email,
         phone: cleanPhone,
         password: data.password.trim(),
-        referralCode: data.referralCode?.trim() || undefined,
+        referralCode: cleanUplineCode,
       }),
     })
       .then(() => syncWithServer())
@@ -893,6 +966,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         }
       }
+    }
+
+    // Broadcast commission to server to credit uplines across devices
+    if (user.referredBy) {
+      fetch('/api/sync/commission', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          buyerId: user.id,
+          buyerName: user.name,
+          buyerEmail: user.email,
+          productPrice: product.price,
+          productName: product.name,
+          uplineCode: user.referredBy,
+        }),
+      })
+        .then(() => syncWithServer())
+        .catch((e) => console.warn('[SYNC] Commission broadcast failed:', e));
     }
 
     triggerConfetti();

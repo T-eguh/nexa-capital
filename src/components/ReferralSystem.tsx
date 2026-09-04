@@ -146,17 +146,24 @@ export const ReferralSystem: React.FC = () => {
     });
   });
 
-  // Merge any recorded downlines from context state
+  // Merge any recorded downlines from context state (Level 1, Level 2, Level 3)
   (downlines || []).forEach((d) => {
     const isL1 = d.uplineReferralCode?.toUpperCase() === user.referralCode?.toUpperCase() || d.uplineId === user.id;
-    if (isL1) {
+    const isL2 = l1Codes.has(d.uplineReferralCode?.toUpperCase() || '');
+    const isL3 = l2Codes.has(d.uplineReferralCode?.toUpperCase() || '');
+
+    if (isL1 || isL2 || isL3 || (d.level && d.level > 1 && (l1Codes.size > 0 || l2Codes.size > 0))) {
       const key = d.id || d.name || d.email;
       const existing = downlineMap.get(key);
+      const assignedLevel = isL1 ? 1 : isL2 ? 2 : isL3 ? 3 : (d.level || 1);
       if (existing) {
         existing.totalSpent = Math.max(existing.totalSpent, d.totalSpent || 0);
         existing.commissionEarned = Math.max(existing.commissionEarned, d.commissionEarned || 0);
       } else {
-        downlineMap.set(key, d);
+        downlineMap.set(key, {
+          ...d,
+          level: assignedLevel,
+        });
       }
     }
   });

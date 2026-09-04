@@ -705,6 +705,66 @@ class InMemoryDatabase {
       updatedAt: new Date().toISOString(),
       roles: ['USER'],
     });
+
+    // Pre-seeded Default Investor User (NX-VIP88)
+    this.users.push({
+      id: 'usr-88392',
+      fullName: 'Investor Nexa',
+      username: 'investornexa',
+      email: 'investor@nexacapital.id',
+      phone: '+6281234567890',
+      passwordHash: userPassword,
+      avatarUrl: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+      country: 'Indonesia',
+      language: 'id',
+      timezone: 'Asia/Jakarta',
+      dateFormat: 'DD/MM/YYYY',
+      currency: 'IDR',
+      isEmailVerified: true,
+      referralCode: 'NX-VIP88',
+      vipLevel: 'VIP 1',
+      saldoPenarikan: 150000,
+      saldoProfit: 50000,
+      totalInvested: 500000,
+      totalProfitEarned: 240000,
+      totalReferralCommission: 64000,
+      failedLoginAttempts: 0,
+      isLockedOut: false,
+      lastLoginAt: new Date().toISOString(),
+      createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
+      updatedAt: new Date().toISOString(),
+      roles: ['USER'],
+    });
+
+    // Pre-seeded Demo Referral User (BUDI8899)
+    this.users.push({
+      id: 'usr-99412',
+      fullName: 'Budi Santoso VIP',
+      username: 'budi_santoso',
+      email: 'budi.s@gmail.com',
+      phone: '+6281345678901',
+      passwordHash: userPassword,
+      country: 'Indonesia',
+      language: 'id',
+      timezone: 'Asia/Jakarta',
+      dateFormat: 'DD/MM/YYYY',
+      currency: 'IDR',
+      isEmailVerified: true,
+      referralCode: 'BUDI8899',
+      referredByCode: 'NX-VIP88',
+      vipLevel: 'VIP 2',
+      saldoPenarikan: 320000,
+      saldoProfit: 120000,
+      totalInvested: 500000,
+      totalProfitEarned: 140000,
+      totalReferralCommission: 32000,
+      failedLoginAttempts: 0,
+      isLockedOut: false,
+      lastLoginAt: new Date().toISOString(),
+      createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
+      updatedAt: new Date().toISOString(),
+      roles: ['USER'],
+    });
   }
 
   // User Operations
